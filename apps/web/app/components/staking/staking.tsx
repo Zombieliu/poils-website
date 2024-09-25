@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
 import { ArrowRightLeft, Wallet } from "lucide-react"

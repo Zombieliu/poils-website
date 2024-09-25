@@ -1,14 +1,14 @@
+"use client";
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
 import TokenSelectionModal from "./token-selection-modal";
 import { useAtom } from "jotai";
 import { TokenSelectionOpen } from "../../jotai/swap/swap";
-import { useState } from "react";
+
 
 
 export default function SwapInterface () {
-  const [searchTerm, setSearchTerm] = useState('')
   const [isTokenSelectionOpen, setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
 
   return (
@@ -31,9 +31,8 @@ export default function SwapInterface () {
           <div className="flex items-center justify-between">
             <Input
               type="text"
-              value="1,232,131,321"
+              defaultValue="1,232,131,321"
               className="text-4xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
-              onChange={(e) => setSearchTerm(e.target.value)}
             />
             {/* how to click button to open token-selection-modal.tsx */}
 
@@ -63,7 +62,7 @@ export default function SwapInterface () {
           <div className="flex items-center justify-between">
             <Input
               type="text"
-              value="0.00"
+              defaultValue="1,232,131,321"
               className="text-4xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
             />
             <Button variant="outline" className="ml-2 rounded-full" onClick={() => setTokenSelectionOpen(true)}>

@@ -20,5 +20,5 @@ const nextConfig = {
 
 module.exports = {
   transpilePackages: ["@repo/ui"],
-  ...nextConfig
+  // ...nextConfig
 };

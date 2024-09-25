@@ -1,8 +1,14 @@
 import { ChevronDown } from "lucide-react"
-import { Button } from "@repo/ui/components/ui/button"
 import Link from "next/link"
+import React from "react"
+import {
+  ConnectButton,
+  useCurrentAccount,
+  useCurrentWallet,
+} from "@mysten/dapp-kit";
 
 export default function Header() {
+  const { currentWallet, connectionStatus } = useCurrentWallet();
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
       <div className="flex items-center space-x-4">
@@ -36,6 +42,12 @@ export default function Header() {
         <Link href="/staking" className="text-sm font-medium hover:text-gray-600">
           Staking
         </Link>
+        <Link href="/mint" className="text-sm font-medium hover:text-gray-600">
+          Mint
+        </Link>
+        <Link href="/assets" className="text-sm font-medium hover:text-gray-600">
+          Assets
+        </Link>
         <a href="#" className="text-sm font-medium hover:text-gray-600">
           Buy
         </a>
@@ -44,9 +56,7 @@ export default function Header() {
           <ChevronDown className="ml-1 h-4 w-4" />
         </button> */}
       </nav>
-      <Button variant="outline" className="ml-auto md:ml-0">
-        Connect Wallet
-      </Button>
+      <ConnectButton />
     </header>
   )
 }

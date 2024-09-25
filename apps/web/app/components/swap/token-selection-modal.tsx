@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react'
 import { X, Search, ChevronDown, ExternalLink, Check } from 'lucide-react'
 import { Button } from "@repo/ui/components/ui/button"
@@ -20,7 +21,6 @@ const tokens = [
 const quickSelectTokens = ['SUI']
 
 function TokenSelectionModalOpen() {
-    const [searchTerm, setSearchTerm] = useState('')
     const [_,setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
     
     const getTokenImage = (symbol: string) => {
@@ -45,8 +45,6 @@ function TokenSelectionModalOpen() {
                 type="text"
                 placeholder="Search by token or paste type"
                 className="pl-10 pr-4 py-3 w-full bg-gray-100 rounded-2xl"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
   

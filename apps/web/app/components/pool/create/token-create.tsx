@@ -1,16 +1,17 @@
+"use client";
 import { ChevronDown } from "lucide-react"
-
 import { Button } from "@repo/ui/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
-import { useState } from "react";
 import { useAtom } from "jotai";
-import { TokenSelectionOpen } from "../../../jotai/swap/swap";
+import React from "react";
+import { PoolSetupOpen } from "../../../jotai/pool/pool";
 
-export default function TokenCreateOne() {
+export default function TokenCreate() {
     // const [searchTerm, setSearchTerm] = useState('')
     // const [isTokenSelectionOpen, setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
+  const [_,SetPoolSetupOpen] = useAtom(PoolSetupOpen);
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-gray-900 text-white rounded-lg">
+    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg">
       <button className="mb-6">
         <ChevronDown className="w-6 h-6" />
       </button>
@@ -39,7 +40,7 @@ export default function TokenCreateOne() {
             <SelectItem value="dai">DAI</SelectItem>
           </SelectContent>
         </Select>
-        <Button className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600">
+        <Button onClick={() => SetPoolSetupOpen(true)} className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600">
           Select tokens
         </Button>
       </div>

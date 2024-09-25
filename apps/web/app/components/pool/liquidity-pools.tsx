@@ -1,5 +1,8 @@
+"use client";
 import { Search, ChevronDown, RefreshCw, Grid, Info } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
+import React from 'react';
 
 export default function LiquidityPools() {
   const pools = [
@@ -14,8 +17,8 @@ export default function LiquidityPools() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="bg-indigo-600 p-4 flex justify-between items-center">
+    <div className="min-h-screen bg-white">
+      <div className="bg-white p-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Image src="https://hop.ag/tokens/Sui.svg" alt="Sui Logo" width={24} height={24} className="rounded-full" />
           <span>Earn $LIQ rewards in</span>
@@ -31,7 +34,11 @@ export default function LiquidityPools() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Earn Fees and Rewards by Providing Liquidity</h1>
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded">+ Create a Pool</button>
+          <button className="bg-white px-4 py-2 rounded">
+            <Link href="/pool/create">
+              + Create a Pool
+            </Link>
+            </button>
         </div>
         
         <div className="flex space-x-4 mb-8 overflow-x-auto">
@@ -41,11 +48,11 @@ export default function LiquidityPools() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div className="bg-gray-800 p-4 rounded">
+          <div className="bg-white p-4 rounded">
             <div className="text-gray-400 mb-2">Total Value Locked</div>
             <div className="text-2xl font-bold">$ 13,482,691</div>
           </div>
-          <div className="bg-gray-800 p-4 rounded">
+          <div className="bg-white p-4 rounded">
             <div className="text-gray-400 mb-2">Volume (24H)</div>
             <div className="text-2xl font-bold">$ 9,488,068</div>
           </div>
@@ -53,35 +60,35 @@ export default function LiquidityPools() {
         
         <div className="flex flex-wrap gap-4 mb-8">
           <div className="relative flex-grow">
-            <input type="text" placeholder="Input coin symbol" className="w-full bg-gray-800 p-2 pl-10 rounded" />
+            <input type="text" placeholder="Input coin symbol" className="w-full bg-white p-2 pl-10 rounded" />
             <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
           </div>
           <div className="relative">
-            <select className="appearance-none bg-gray-800 p-2 pr-10 rounded">
+            <select className="appearance-none bg-white p-2 pr-10 rounded">
               <option>Category</option>
             </select>
             <ChevronDown className="absolute right-3 top-2.5 text-gray-400" size={20} />
           </div>
           <div className="relative">
-            <select className="appearance-none bg-gray-800 p-2 pr-10 rounded">
+            <select className="appearance-none bg-white p-2 pr-10 rounded">
               <option>Sort By</option>
             </select>
             <ChevronDown className="absolute right-3 top-2.5 text-gray-400" size={20} />
           </div>
-          <button className="bg-gray-800 p-2 rounded flex items-center">
+          <button className="bg-white p-2 rounded flex items-center">
             <input type="checkbox" className="mr-2" /> Display all pools
           </button>
-          <button className="bg-gray-800 p-2 rounded">
+          <button className="bg-white p-2 rounded">
             <RefreshCw size={20} />
           </button>
-          <button className="bg-gray-800 p-2 rounded">
+          <button className="bg-white p-2 rounded">
             <Grid size={20} />
           </button>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {pools.map((pool, index) => (
-            <div key={index} className="bg-gray-800 p-4 rounded">
+            <div key={index} className="bg-white p-4 rounded">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center space-x-2">
                   <Image src="https://hop.ag/tokens/Sui.svg" alt={pool.name.split(' / ')[0]} width={24} height={24} className="rounded-full" />
