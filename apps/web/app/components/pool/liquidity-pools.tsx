@@ -1,36 +1,33 @@
-"use client";
+"use client"
+
 import { Search, ChevronDown, RefreshCw, Grid, Info } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react';
+import React from 'react'
 
 export default function LiquidityPools() {
-  const pools = [
-    { name: 'BLUB / SUI', apr: '432.17%', liquidity: '$732,615', volume: '$819,691', feeTier: '1%' },
-    { name: 'AAA / SUI', apr: '359.04%', liquidity: '$48,707', volume: '$43,353', feeTier: '1%' },
-    { name: 'PUFF / SUI', apr: '127.61%', liquidity: '$84,279', volume: '$25,720', feeTier: '1%' },
-    { name: 'LIQ / TURBOS', apr: '620.04%', liquidity: '$14,826', volume: '$19,263', feeTier: '1%' },
-    { name: 'SUI / USDC', apr: '328.72%', liquidity: '$2,234,003', volume: '$5,355,934', feeTier: '0.3%' },
-    { name: 'USDT / USDC', apr: '20.78%', liquidity: '$5,364,358', volume: '$1,642,141', feeTier: '0.01%' },
-    { name: 'FUD / SUI', apr: '499.64%', liquidity: '$486,326', volume: '$665,726', feeTier: '1%' },
-    { name: 'LIQ / SUI', apr: '307.52%', liquidity: '$259,579', volume: '$318,707', feeTier: '1%' },
-  ]
 
+  const pools = [
+    { name: 'BLUB / SUI', apr: '432.17%', liquidity: '$732,615', volume: '$819,691', feeTier: '1%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+    { name: 'AAA / SUI', apr: '359.04%', liquidity: '$48,707', volume: '$43,353', feeTier: '1%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+    { name: 'PUFF / SUI', apr: '127.61%', liquidity: '$84,279', volume: '$25,720', feeTier: '1%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+    { name: 'LIQ / TURBOS', apr: '620.04%', liquidity: '$14,826', volume: '$19,263', feeTier: '1%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+    { name: 'SUI / USDC', apr: '328.72%', liquidity: '$2,234,003', volume: '$5,355,934', feeTier: '0.3%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+    { name: 'USDT / USDC', apr: '20.78%', liquidity: '$5,364,358', volume: '$1,642,141', feeTier: '0.01%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+    { name: 'FUD / SUI', apr: '499.64%', liquidity: '$486,326', volume: '$665,726', feeTier: '1%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+    { name: 'LIQ / SUI', apr: '307.52%', liquidity: '$259,579', volume: '$318,707', feeTier: '1%', 
+      token1Image: 'https://hop.ag/tokens/SUI.svg', token2Image: 'https://hop.ag/tokens/SUI.svg' },
+  ]
+  
   return (
-    <div className="min-h-screen bg-white">
-      {/* <div className="bg-white p-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <Image src="https://hop.ag/tokens/Sui.svg" alt="Sui Logo" width={24} height={24} className="rounded-full" />
-          <span>Earn $LIQ rewards in</span>
-          <Image src="https://hop.ag/tokens/Sui.svg" alt="LIQ" width={24} height={24} className="rounded-full" />
-          <span>LIQ - TURBOS</span>
-          <span className="bg-yellow-400 text-black px-2 rounded">Pool</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Image src="https://hop.ag/tokens/Sui.svg" alt="Sui Logo" width={24} height={24} className="rounded-full" />
-        </div>
-      </div> */}
-      
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-4">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Earn Fees and Rewards by Providing Liquidity</h1>
@@ -38,13 +35,13 @@ export default function LiquidityPools() {
             <Link href="/pool/create">
               + Create a Pool
             </Link>
-            </button>
+          </button>
         </div>
         
         <div className="flex space-x-4 mb-8 overflow-x-auto">
           <button className="text-indigo-400 border-b-2 border-indigo-400 pb-2 whitespace-nowrap">Concentrated Liquidity Pools</button>
-          <button className="text-gray-400 whitespace-nowrap">My Favorite</button>
-          <button className="text-gray-400 whitespace-nowrap">Manage Positions and Rewards</button>
+          {/* <button className="text-gray-400 whitespace-nowrap">My Favorite</button>
+          <button className="text-gray-400 whitespace-nowrap">Manage Positions and Rewards</button> */}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -91,13 +88,13 @@ export default function LiquidityPools() {
             <div key={index} className="bg-white p-4 rounded">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center space-x-2">
-                  <Image src="https://hop.ag/tokens/Sui.svg" alt={pool.name.split(' / ')[0]} width={24} height={24} className="rounded-full" />
-                  <Image src="https://hop.ag/tokens/Sui.svg" alt={pool.name.split(' / ')[1]} width={24} height={24} className="rounded-full" />
+                  <img src={pool.token1Image} alt={pool.name.split(' / ')[0]} width={24} height={24} className="rounded-full" />
+                  <img src={pool.token2Image} alt={pool.name.split(' / ')[1]} width={24} height={24} className="rounded-full" />
                   <span>{pool.name}</span>
                 </div>
                 <div className="flex space-x-2">
-                  <Image src="https://hop.ag/tokens/Sui.svg" alt="Reward" width={24} height={24} className="rounded-full" />
-                  <Image src="https://hop.ag/tokens/Sui.svg" alt="Reward" width={24} height={24} className="rounded-full" />
+                  <img src="https://hop.ag/tokens/SUI.svg" alt="Sui" className="rounded-full" />
+                  <img src="https://hop.ag/tokens/SUI.svg" alt="Sui" className="rounded-full" />
                 </div>
               </div>
               <div className="flex justify-between items-center mb-4">
@@ -107,7 +104,7 @@ export default function LiquidityPools() {
                 </div>
                 <div>
                   <div className="text-gray-400 text-sm">Rewards</div>
-                  <Image src="https://hop.ag/tokens/Sui.svg" alt="Reward" width={24} height={24} className="rounded-full" />
+                  <img src="https://hop.ag/tokens/SUI.svg" alt="Sui" width={24} height={24} className="rounded-full" />
                 </div>
               </div>
               <div className="space-y-2 mb-4">

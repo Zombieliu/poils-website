@@ -20,7 +20,7 @@ export default function AssetViewer() {
   const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0)
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-8">
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-2">Value</h2>

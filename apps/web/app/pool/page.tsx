@@ -8,8 +8,8 @@ import LiquidityPools from "../components/pool/liquidity-pools";
 export default function Page() {
 
     return (
-        <div>
+        <main>
            <LiquidityPools/>
-        </div>
+        </main>
     )
 }

@@ -6,8 +6,8 @@ import Staking from "../components/staking/staking";
 export default function Page() {
 
     return (
-        <div>
+        <main>
            <Staking/>
-        </div>
+        </main>
     )
 }

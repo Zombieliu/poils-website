@@ -1,12 +1,12 @@
-"use client";
+'use client'
+
 import { useState } from 'react'
 import { ArrowLeft, Info, AlertTriangle } from 'lucide-react'
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
 import { Label } from "@repo/ui/components/ui/label"
-import React from 'react'
-import { PoolSetupOpen } from '../../../jotai/pool/pool';
-import { useAtom } from 'jotai';
+import { useAtom } from 'jotai'
+import { PoolSetupOpen } from '../../../jotai/pool/pool'
 
 export default function LiquidityPoolSetup() {
   const [feeTier, setFeeTier] = useState('1%')
@@ -14,11 +14,12 @@ export default function LiquidityPoolSetup() {
   const [liquidityRange, setLiquidityRange] = useState('Full')
   const [suiAmount, setSuiAmount] = useState('')
   const [usdcAmount, setUsdcAmount] = useState('0.1')
-  const [_,SetPoolSetupOpen] = useAtom(PoolSetupOpen);
+  const [_, setPoolSetupOpen] = useAtom(PoolSetupOpen)
+
   return (
     <div className="min-h-screen bg-white p-6 max-w-md mx-auto">
       <div className="mb-6 flex items-center">
-        <button onClick={()=>SetPoolSetupOpen(false)}>
+        <button onClick={() => setPoolSetupOpen(false)} className="flex items-center text-primary">
           <ArrowLeft className="mr-2" />
           <span>Back to select tokens</span>
         </button>
@@ -83,32 +84,32 @@ export default function LiquidityPoolSetup() {
       
       <div className="mb-6">
         <Label className="mb-2">Amount to deposit</Label>
-        <div className="text-right mb-2 ">50% $SUI : 50% $USDC</div>
-        <div className="bg-white p-4 rounded-lg">
+        <div className="text-right mb-2 text-gray-600">50% $SUI : 50% $USDC</div>
+        <div className="bg-gray-100 p-4 rounded-lg">
           <div className="flex items-center mb-4">
-            <div className="w-8 h-8 bg-blue-500 rounded-full mr-2"></div>
+            <img src="https://hop.ag/tokens/SUI.svg" alt="Poils logo" className="w-8 h-8 rounded-full mr-2" />
             <div className="flex-1">
               <div>Poils</div>
-              <div className="text-sm ">Balance: 10.64</div>
+              <div className="text-sm text-gray-600">Balance: 10.64</div>
             </div>
             <Input
               type="text"
               value={suiAmount}
               onChange={(e) => setSuiAmount(e.target.value)}
-              className="w-1/3 "
+              className="w-1/3 bg-white"
             />
           </div>
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-green-500 rounded-full mr-2"></div>
+            <img src="https://hop.ag/tokens/SUI.svg" alt="Obelisk logo" className="w-8 h-8 rounded-full mr-2" />
             <div className="flex-1">
               <div>Obelisk</div>
-              <div className="text-sm ">Balance: 0.013213</div>
+              <div className="text-sm text-gray-600">Balance: 0.013213</div>
             </div>
             <Input
               type="text"
               value={usdcAmount}
               onChange={(e) => setUsdcAmount(e.target.value)}
-              className="w-1/3 "
+              className="w-1/3 bg-white"
             />
           </div>
         </div>
@@ -118,19 +119,19 @@ export default function LiquidityPoolSetup() {
         </div>
       </div>
       
-      <div className="bg-white p-4 rounded-lg mb-6">
+      <div className="bg-yellow-50 p-4 rounded-lg mb-6">
         <div className="flex items-start">
           <AlertTriangle className="w-6 h-6 mr-2 text-yellow-500" />
           <div>
             <div className="font-bold">Important Notice:</div>
-            <div className="text-sm">
+            <div className="text-sm text-gray-700">
               A minimum liquidity deposit of $100 is required to create a new pool. This ensures that token pools are established by project builders and core community members with a genuine commitment to the project.
             </div>
           </div>
         </div>
       </div>
       
-      <Button className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
+      <Button className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white">
         Create Poils pool and deposit
       </Button>
     </div>
