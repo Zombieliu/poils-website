@@ -3,12 +3,14 @@ import Link from "next/link"
 import React from "react"
 import {
   ConnectButton,
-  useCurrentAccount,
   useCurrentWallet,
 } from "@mysten/dapp-kit";
+import { ConnectModal, useCurrentAccount } from '@mysten/dapp-kit';
+import { useState } from 'react';
 
 export default function Header() {
-  const { currentWallet, connectionStatus } = useCurrentWallet();
+  const currentAccount = useCurrentAccount();
+	const [open, setOpen] = useState(false);
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
       <div className="flex items-center space-x-4">
@@ -42,21 +44,28 @@ export default function Header() {
         <Link href="/staking" className="text-sm font-medium hover:text-gray-600">
           Staking
         </Link>
-        <Link href="/mint" className="text-sm font-medium hover:text-gray-600">
-          Mint
-        </Link>
         <Link href="/assets" className="text-sm font-medium hover:text-gray-600">
           Assets
         </Link>
-        <a href="#" className="text-sm font-medium hover:text-gray-600">
-          Buy
-        </a>
+        <Link href="/mint" className="text-sm font-medium hover:text-gray-600">
+          Mint
+        </Link>
+        <Link href="/wrap" className="text-sm font-medium hover:text-gray-600">
+          Warp
+        </Link>
         {/* <button className="text-sm font-medium hover:text-gray-600 flex items-center">
           <span>More</span>
           <ChevronDown className="ml-1 h-4 w-4" />
         </button> */}
       </nav>
       <ConnectButton />
+      {/* <ConnectModal
+        trigger={
+          <button disabled={!!currentAccount}> {currentAccount ? 'Connected' : 'Connect'}</button>
+        }
+        open={open}
+        onOpenChange={(isOpen) => setOpen(isOpen)}
+      /> */}
     </header>
   )
 }

@@ -18,7 +18,7 @@ export default function LiquidityPools() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="bg-white p-4 flex justify-between items-center">
+      {/* <div className="bg-white p-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Image src="https://hop.ag/tokens/Sui.svg" alt="Sui Logo" width={24} height={24} className="rounded-full" />
           <span>Earn $LIQ rewards in</span>
@@ -29,7 +29,7 @@ export default function LiquidityPools() {
         <div className="flex items-center space-x-2">
           <Image src="https://hop.ag/tokens/Sui.svg" alt="Sui Logo" width={24} height={24} className="rounded-full" />
         </div>
-      </div>
+      </div> */}
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">

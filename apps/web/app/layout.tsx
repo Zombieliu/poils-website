@@ -18,6 +18,7 @@ import { NETWORK } from "./chain/config";
 import { EnokiFlowProvider } from "@mysten/enoki/react";
 // import {PrivyProvider} from '@privy-io/react-auth';
 import Header from "./components/header";
+import React from "react";
 
 
 const inter = Inter({ subsets: ["latin"] });

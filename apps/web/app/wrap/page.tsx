@@ -1,11 +1,12 @@
-"use client";
-import { ChevronDown } from "lucide-react"
-import { Button } from "@repo/ui/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
-import { useAtom } from "jotai";
-import React from "react";
-import { PoolSetupOpen } from "../../../jotai/pool/pool";
+'use client'
 
+import { useState } from 'react'
+import { Button } from "@repo/ui/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
+import { Input } from "@repo/ui/components/ui/input"
+import { Label } from "@repo/ui/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
+import React from 'react'
 
 // Token logo components
 const EthLogo = () => {
@@ -46,26 +47,32 @@ const DaiLogo = () => {
     </svg>
     )
 }
-export default function TokenCreate() {
-    // const [searchTerm, setSearchTerm] = useState('')
-    // const [isTokenSelectionOpen, setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
-  const [_,SetPoolSetupOpen] = useAtom(PoolSetupOpen);
+  
+
+
+export default function TokenWrapper() {
+    const [sourceToken, setSourceToken] = useState("")
+    const [targetToken, setTargetToken] = useState("")
+    const [amount, setAmount] = useState("")
+
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg">
-      <button className="mb-6">
-        <ChevronDown className="w-6 h-6" />
-      </button>
-      <h2 className="text-2xl font-bold mb-2">Step 1: Select tokens</h2>
-      <p className="text-gray-400 mb-6">
-        Tips: for Poils/USDC, Poils is the base token, USDC is the quote token.
-      </p>
-      <div className="space-y-4">
-        <Select>
-          <SelectTrigger className="w-full bg-white border-gray-700">
-            <SelectValue placeholder="Select a base token" />
-          </SelectTrigger>
-          <SelectContent>
-          <SelectItem value="ETH">
+    <div className="min-h-screen bg-white">
+      <div className="flex justify-center items-start pt-8">
+        <Card className="w-[400px] border-gray-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Poils Token Wrapper</CardTitle>
+            <p className="text-sm text-gray-500">Wrap one coin into Poils token</p>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="sourceToken">Source Token</Label>
+                <Select value={sourceToken} onValueChange={setSourceToken}>
+                  <SelectTrigger id="sourceToken" className="w-full">
+                    <SelectValue placeholder="Select source token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ETH">
                       <div className="flex items-center">
                         <EthLogo />
                         <span className="ml-2">ETH</span>
@@ -83,36 +90,47 @@ export default function TokenCreate() {
                         <span className="ml-2">DAI</span>
                       </div>
                     </SelectItem>
-          </SelectContent>
-        </Select>
-        <Select>
-          <SelectTrigger className="w-full bg-white border-gray-700">
-            <SelectValue placeholder="Select a quote token" />
-          </SelectTrigger>
-          <SelectContent>
-          <SelectItem value="ETH">
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="targetToken">Target Token</Label>
+                <Select value={targetToken} onValueChange={setTargetToken}>
+                  <SelectTrigger id="targetToken" className="w-full">
+                    <SelectValue placeholder="Select target token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WETH">
                       <div className="flex items-center">
                         <EthLogo />
-                        <span className="ml-2">ETH</span>
+                        <span className="ml-2">PETH</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="USDT">
+                    <SelectItem value="WUSDT">
                       <div className="flex items-center">
                         <UsdtLogo />
-                        <span className="ml-2">USDT</span>
+                        <span className="ml-2">PUSDT</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="DAI">
+                    <SelectItem value="WDAI">
                       <div className="flex items-center">
                         <DaiLogo />
-                        <span className="ml-2">DAI</span>
+                        <span className="ml-2">PDAI</span>
                       </div>
                     </SelectItem>
-          </SelectContent>
-        </Select>
-        <Button onClick={() => SetPoolSetupOpen(true)} className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600">
-          Select tokens
-        </Button>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount</Label>
+                <Input id="amount" placeholder="Enter wrap amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              </div>
+              <div className="flex justify-between pt-4">
+                <Button className="w-[100%] bg-blue-600 hover:bg-blue-700">Wrap</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
