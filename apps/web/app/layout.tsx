@@ -19,6 +19,7 @@ import { EnokiFlowProvider } from "@mysten/enoki/react";
 // import {PrivyProvider} from '@privy-io/react-auth';
 import Header from "./components/header";
 import React from "react";
+import AppWrapper from "./components/app-wrapper";
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -64,7 +65,7 @@ export default function RootLayout({
                 <Toaster />
                 <div>
                   <Header/>
-                {children}
+                  <AppWrapper>{children}</AppWrapper>
                 </div>
                 </EnokiFlowProvider>
               </WalletProvider>

@@ -6,6 +6,11 @@ import { Input } from "@repo/ui/components/ui/input"
 import { Label } from "@repo/ui/components/ui/label"
 import { Textarea } from "@repo/ui/components/ui/textarea"
 import { InfoCircledIcon } from "@radix-ui/react-icons"
+import { Transaction, TransactionArgument } from "@0xobelisk/sui-client";
+import { obelisk_client } from "../../jotai/obelisk";
+import { useAtom } from "jotai";
+import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { toast } from "sonner";
 
 
 interface BlobInfo {
@@ -27,7 +32,10 @@ export default function Mint() {
   const [description, setDescription] = useState("");
   const [decimals, setDecimals] = useState("");
   const [isFormComplete, setIsFormComplete] = useState(false);
-
+  const [obelisk] = useAtom(obelisk_client)
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const [digest, setDigest] = useState("");
+  
   const basePublisherUrl = "https://publisher-devnet.walrus.space"
   const Aggregator = "https://aggregator-devnet.walrus.space"
 
@@ -120,11 +128,51 @@ const closeTokenImageArea = () => {
     return info;
   };
 
-  const handleMint = () => {
+  const handleMint = async() => {
     // 在这里添加铸造逻辑
     console.log("Minting token...");
+    const mintInfo = {
+      tokenName,
+      tokenSymbol,
+      description,
+      decimals: parseInt(decimals, 10),
+      blobUrl: uploadedBlobs[0]?.blobUrl, // Assuming we use the first uploaded blob
+    };
+    let tx = new Transaction();
+    let params: TransactionArgument[] = [
+        tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df"),
+        tx.pure.string(tokenName),
+        tx.pure.string(tokenSymbol),
+        tx.pure.string(description),
+        tx.pure.u8(mintInfo.decimals),
+        tx.pure.string(mintInfo.blobUrl),
+        tx.pure.string(mintInfo.blobUrl),
+      ];
+    console.log(mintInfo);
+    await obelisk.tx.assets_system.create(tx, params, undefined, true);
+    await signAndExecuteTransaction(
+      {
+        transaction: tx.serialize(),
+        chain: `sui:testnet`,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction', result);
+          toast("Translation Successful", {
+            description: new Date().toUTCString(),
+            action: {
+              label: "Check in Explorer",
+              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+            },
+          });
+          setDigest(result.digest);
+        },
+        onError: error => {
+          console.log('executed transaction', error);
+        },
+      },
+    );
   };
-  
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-4">
       <h1 className="text-3xl font-bold text-center mb-12">Create a New Poils Token</h1>
