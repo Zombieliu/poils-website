@@ -15,7 +15,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input"
 import { Label } from "@repo/ui/components/ui/label"
 import { isValidSuiAddress, Transaction, TransactionArgument } from "@0xobelisk/sui-client"
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit"
 import { useAtom } from "jotai"
 import { obelisk_client } from "../jotai/obelisk"
@@ -141,8 +141,9 @@ export default function AssetViewer() {
                         </DialogHeader>
                         <form onSubmit={(e) => {
                           e.preventDefault()
-                          const amount = e.target.amount.value
-                          const recipient = e.target.recipient.value
+                          const form = e.target as HTMLFormElement
+                          const amount = (form.querySelector('[name="amount"]') as HTMLInputElement).value
+                          const recipient = (form.querySelector('[name="recipient"]') as HTMLInputElement).value
                           handleTransfer(amount, recipient)
                         }}>
                           <div className="grid gap-4 py-4">
