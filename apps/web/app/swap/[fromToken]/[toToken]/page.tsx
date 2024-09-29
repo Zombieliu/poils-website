@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react"
-import { ArrowUpDown, ChevronDown } from "lucide-react"
+import { ArrowUpDown, ChevronDown, Loader2 } from "lucide-react"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
-import TokenSelectionModal from "../../../components/swap/token-selection-modal";
+import { Skeleton } from "@repo/ui/components/ui/skeleton"
 import { useAtom } from "jotai";    
 import { TokenSelectionOpen } from "../../../jotai/swap/swap";
 import { useRouter } from 'next/navigation';
@@ -20,15 +20,75 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
     const [fromToken, setFromToken] = useState(tokens[params.fromToken as keyof typeof tokens]);
     const [toToken, setToToken] = useState(tokens[params.toToken as keyof typeof tokens]);
 
+    const [isLoading, setIsLoading] = useState(false);
+    const [dollarValue, setDollarValue] = useState<string | null>(null);
+
+    const [fromTokenLoading, setFromTokenLoading] = useState(true);
+    const [toTokenLoading, setToTokenLoading] = useState(true);
+
     useEffect(() => {
         setFromToken(tokens[params.fromToken as keyof typeof tokens]);
         setToToken(tokens[params.toToken as keyof typeof tokens]);
+        
+        // Simulate image loading
+        setFromTokenLoading(true);
+        setToTokenLoading(true);
+        
+        setTimeout(() => {
+            setFromTokenLoading(false);
+            setToTokenLoading(false);
+        }, 1500); // Adjust this timeout as needed
     }, [params.fromToken, params.toToken]);
 
     const handleSwap = () => {
         console.log("Swap button clicked"); // 调试日志
         router.push(`/swap/${params.toToken}/${params.fromToken}`);
     };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setIsLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            setDollarValue("$1,835,875,668.29");
+            setIsLoading(false);
+        }, 1000);
+    };
+
+    const [isLoadingPay, setIsLoadingPay] = useState(false);
+    const [isLoadingReceive, setIsLoadingReceive] = useState(false);
+    const [dollarValuePay, setDollarValuePay] = useState<string | null>(null);
+    const [dollarValueReceive, setDollarValueReceive] = useState<string | null>(null);
+
+    const handleInputChangePay = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setPayAmount(value);
+        setIsLoadingPay(true);
+        setIsLoadingReceive(true);
+        
+        // Simulate API call for exchange rate and dollar values
+        setTimeout(() => {
+            // This is a mock calculation. Replace with actual API call and calculation
+            const calculatedReceiveAmount = (parseFloat(value) * 1.5).toFixed(2);
+            setReceiveAmount(calculatedReceiveAmount);
+            setDollarValuePay(`$${(parseFloat(value) * 1).toFixed(2)}`);
+            setDollarValueReceive(`$${(parseFloat(calculatedReceiveAmount) * 1).toFixed(2)}`);
+            setIsLoadingPay(false);
+            setIsLoadingReceive(false);
+        }, 1000);
+    };
+
+    const handleInputChangeReceive = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setIsLoadingReceive(true);
+        setTimeout(() => {
+            setDollarValueReceive("$1,835,875,668.29");
+            setIsLoadingReceive(false);
+        }, 1000);
+    };
+
+    const [payAmount, setPayAmount] = useState<string>('');
+    const [receiveAmount, setReceiveAmount] = useState<string>('');
 
     return (
         <main>
@@ -40,16 +100,25 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
                             <div className="flex items-center justify-between">
                                 <Input
                                     type="text"
-                                    defaultValue="1,232,131,321"
+                                    value={payAmount}
                                     className="text-4xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
+                                    onChange={handleInputChangePay}
                                 />
                                 <Button variant="outline" className="ml-2 rounded-full" onClick={() => setTokenSelectionOpen(true)}>
-                                    <img src={fromToken.icon} alt={fromToken.symbol} className="w-5 h-5 mr-2" />
+                                    {fromTokenLoading ? (
+                                        <Skeleton className="w-5 h-5 rounded-full mr-2" />
+                                    ) : (
+                                        <img src={fromToken.icon} alt={fromToken.symbol} className="w-5 h-5 mr-2" />
+                                    )}
                                     {fromToken.symbol}
                                     <ChevronDown className="ml-2 h-4 w-4" />
                                 </Button>
                             </div>
-                            <div className="text-gray-500 text-sm mt-1">$1,835,875,668.29</div>
+                            <div className="text-gray-500 text-sm mt-1 h-5">
+                                {isLoadingPay ? (
+                                    <Loader2 className="animate-spin h-4 w-4 inline-block" />
+                                ) : dollarValuePay}
+                            </div>
                         </div>
                         <div className="flex justify-center">
                             <Button variant="outline" size="icon" className="rounded-full" onClick={handleSwap}>
@@ -61,16 +130,25 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
                             <div className="flex items-center justify-between">
                                 <Input
                                     type="text"
-                                    defaultValue="1,232,131,321"
+                                    value={isLoadingReceive ? '' : receiveAmount}
                                     className="text-4xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
+                                    readOnly
                                 />
                                 <Button variant="outline" className="ml-2 rounded-full" onClick={() => setTokenSelectionOpen(true)}>
-                                    <img src={toToken.icon} alt={toToken.symbol} className="w-5 h-5 mr-2" />
+                                    {toTokenLoading ? (
+                                        <Skeleton className="w-5 h-5 rounded-full mr-2" />
+                                    ) : (
+                                        <img src={toToken.icon} alt={toToken.symbol} className="w-5 h-5 mr-2" />
+                                    )}
                                     {toToken.symbol}
                                     <ChevronDown className="ml-2 h-4 w-4" />
                                 </Button>
                             </div>
-                            <div className="text-gray-500 text-sm mt-1">$0.00</div>
+                            <div className="text-gray-500 text-sm mt-1 h-5">
+                                {isLoadingReceive ? (
+                                    <Loader2 className="animate-spin h-4 w-4 inline-block" />
+                                ) : dollarValueReceive}
+                            </div>
                         </div>
                     </div>
                     <div className="text-center text-gray-500 text-sm mt-4">

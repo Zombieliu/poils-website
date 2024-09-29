@@ -9,7 +9,7 @@ import { InfoCircledIcon } from "@radix-ui/react-icons"
 import { Transaction, TransactionArgument } from "@0xobelisk/sui-client";
 import { obelisk_client } from "../../jotai/obelisk";
 import { useAtom } from "jotai";
-import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { toast } from "sonner";
 
 

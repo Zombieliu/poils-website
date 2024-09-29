@@ -12,6 +12,14 @@ import {
 import { RefreshCw, MoreHorizontal } from "lucide-react"
 import { Button } from "@repo/ui/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table"
+import { Transaction, TransactionArgument } from "@0xobelisk/sui-client"
+import { obelisk_client } from "../jotai/obelisk"
+import { useAtom } from "jotai"
+import { toast } from "sonner";
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useEffect, useState } from "react"
+import { useCurrentWallet } from "@mysten/dapp-kit";
+import { useRouter } from 'next/navigation';
 
 const tokenData = [
   { name: "Obelisk (OBL)", balance: 0.5, value: 15000, icon: "https://hop.ag/tokens/SUI.svg" },
@@ -21,6 +29,178 @@ const tokenData = [
 ]
 
 export default function Assets() {
+  const [obelisk] = useAtom(obelisk_client)
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const [digest, setDigest] = useState("");
+  const { currentWallet } = useCurrentWallet();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!currentWallet) {
+      router.push('/'); // Redirect to home page if wallet is not connected
+    }
+  }, [currentWallet, router]);
+
+  if (!currentWallet) {
+    return null; // Or you could return a loading indicator
+  }
+
+  const handleTransfer = async() => {
+    console.log("Transfer clicked");
+    let tx = new Transaction();
+    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
+    const assets_id = tx.pure.u32(0);
+    const to = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
+    const amount = tx.pure.u64(1);
+    let params: TransactionArgument[] = [
+       assets_object,
+       assets_id,
+       to,
+       amount
+      ];
+    await obelisk.tx.assets_system.transfer(tx, params, undefined, true);
+    await signAndExecuteTransaction(
+      {
+        transaction: tx.serialize(),
+        chain: `sui:testnet`,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction', result);
+          toast("Translation Successful", {
+            description: new Date().toUTCString(),
+            action: {
+              label: "Check in Explorer",
+              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+            },
+          });
+          setDigest(result.digest);
+        },
+        onError: error => {
+          console.log('executed transaction', error);
+        },
+      },
+    );
+  }
+
+  const handleTransferAll = async() => {
+    console.log("TransferAll clicked");
+    let tx = new Transaction();
+    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
+    const assets_id = tx.pure.u32(0);
+    const to = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
+    let params: TransactionArgument[] = [
+       assets_object,
+       assets_id,
+       to,
+      ];
+    await obelisk.tx.assets_system.transfer_all(tx, params, undefined, true);
+    await signAndExecuteTransaction(
+      {
+        transaction: tx.serialize(),
+        chain: `sui:testnet`,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction', result);
+          toast("Translation Successful", {
+            description: new Date().toUTCString(),
+            action: {
+              label: "Check in Explorer",
+              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+            },
+          });
+          setDigest(result.digest);
+        },
+        onError: error => {
+          console.log('executed transaction', error);
+        },
+      },
+    );
+  }
+
+  const handleMint = async() => {
+    console.log("Mint clicked");
+    let tx = new Transaction();
+    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
+    const assets_id = tx.pure.u32(0);
+    const to = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
+    const amount = tx.pure.u64(1);
+    let params: TransactionArgument[] = [
+       assets_object,
+       assets_id,
+       to,
+       amount
+      ];
+    await obelisk.tx.assets_system.mint(tx, params, undefined, true);
+    await signAndExecuteTransaction(
+      {
+        transaction: tx.serialize(),
+        chain: `sui:testnet`,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction', result);
+          toast("Translation Successful", {
+            description: new Date().toUTCString(),
+            action: {
+              label: "Check in Explorer",
+              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+            },
+          });
+          setDigest(result.digest);
+        },
+        onError: error => {
+          console.log('executed transaction', error);
+        },
+      },
+    );
+  }
+  
+  const handleBurn = async() => {
+    console.log("Burn clicked");
+    let tx = new Transaction();
+    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
+    const assets_id = tx.pure.u32(0);
+    const who = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
+    const amount = tx.pure.u64(1);
+    let params: TransactionArgument[] = [
+       assets_object,
+       assets_id,
+       who,
+       amount
+      ];
+    await obelisk.tx.assets_system.transfer_all(tx, params, undefined, true);
+    await signAndExecuteTransaction(
+      {
+        transaction: tx.serialize(),
+        chain: `sui:testnet`,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction', result);
+          toast("Translation Successful", {
+            description: new Date().toUTCString(),
+            action: {
+              label: "Check in Explorer",
+              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+            },
+          });
+          setDigest(result.digest);
+        },
+        onError: error => {
+          console.log('executed transaction', error);
+        },
+      },
+    );
+  }
+
+
+  // const handleViewDetails = async() => {
+  //   console.log("View Details clicked");
+    
+  // }
+
   return (
     <SheetContent className="w-[400px] sm:w-[540px] bg-pink-50">
       <SheetHeader>
@@ -69,9 +249,13 @@ export default function Assets() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Transfer</DropdownMenuItem>
+                      
+                      <DropdownMenuItem onClick={handleTransfer}>Transfer</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleTransferAll}>TransferAll</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleMint}>Mint</DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleBurn}>Burn</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
+                      {/* <DropdownMenuItem onClick={handleViewDetails}>View Details</DropdownMenuItem> */}
                       {/* <DropdownMenuItem>Edit</DropdownMenuItem> */}
                     </DropdownMenuContent>
                   </DropdownMenu>

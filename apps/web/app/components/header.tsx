@@ -68,14 +68,14 @@ export default function Header() {
           <ChevronDown className="ml-1 h-4 w-4" />
         </button> */}
       </nav>
-      {/* <ConnectButton /> */}
-      <ConnectModal
+      <ConnectButton />
+      {/* <ConnectModal
         trigger={
           <button disabled={!!currentAccount}> {currentAccount ? 'Connected' : 'Connect'}</button>
         }
         open={open}
         onOpenChange={(isOpen) => setOpen(isOpen)}
-      />
+      /> */}
       <Sheet open={assetsSheetOpen} onOpenChange={setAssetsSheetOpen}>
         <Assets />
       </Sheet>
