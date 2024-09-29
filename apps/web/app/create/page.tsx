@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import Mint from "../components/mint/mint";
+import Create from "../components/create/create";
 
 export default function Page() {
   return (
     <main>
-      <Mint/>
+      <Create/>
     </main>
   )
 }

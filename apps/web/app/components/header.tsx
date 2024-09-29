@@ -54,8 +54,8 @@ export default function Header() {
         >
           Assets
         </button>
-        <Link href="/mint" className="text-sm font-medium hover:text-gray-600">
-          Mint
+        <Link href="/create" className="text-sm font-medium hover:text-gray-600">
+          Create Token
         </Link>
         <Link href="/wrap" className="text-sm font-medium hover:text-gray-600">
           Warp

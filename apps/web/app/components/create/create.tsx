@@ -25,7 +25,7 @@ interface BlobInfo {
   media_type: string;
 }
 
-export default function Mint() {
+export default function Create() {
   const [uploadedBlobs, setUploadedBlobs] = useState<BlobInfo[]>([]);
   const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");

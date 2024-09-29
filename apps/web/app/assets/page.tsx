@@ -18,7 +18,7 @@ import { obelisk_client } from "../jotai/obelisk"
 import { useAtom } from "jotai"
 import { toast } from "sonner"
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { useRouter } from 'next/navigation'
 
@@ -46,6 +46,7 @@ export default function Assets() {
   const router = useRouter()
 
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -61,11 +62,14 @@ export default function Assets() {
     }
   }, [currentWallet, router])
 
-  if (!currentWallet) {
-    return null
-  }
+  const refreshData = useCallback(() => {
+    setIsRefreshing(true)
+    setTimeout(() => {
+      setIsRefreshing(false)
+    }, 2000)
+  }, [])
 
-  const handleTransfer = async() => {
+  const handleTransfer = useCallback(async () => {
     console.log("Transfer clicked");
     let tx = new Transaction();
     const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
@@ -101,9 +105,9 @@ export default function Assets() {
         },
       },
     );
-  }
+  }, [obelisk, signAndExecuteTransaction, setDigest])
 
-  const handleTransferAll = async() => {
+  const handleTransferAll = useCallback(async () => {
     console.log("TransferAll clicked");
     let tx = new Transaction();
     const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
@@ -137,9 +141,9 @@ export default function Assets() {
         },
       },
     );
-  }
+  }, [obelisk, signAndExecuteTransaction, setDigest])
 
-  const handleMint = async() => {
+  const handleMint = useCallback(async () => {
     console.log("Mint clicked");
     let tx = new Transaction();
     const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
@@ -175,9 +179,9 @@ export default function Assets() {
         },
       },
     );
-  }
-  
-  const handleBurn = async() => {
+  }, [obelisk, signAndExecuteTransaction, setDigest])
+
+  const handleBurn = useCallback(async () => {
     console.log("Burn clicked");
     let tx = new Transaction();
     const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
@@ -213,6 +217,10 @@ export default function Assets() {
         },
       },
     );
+  }, [obelisk, signAndExecuteTransaction, setDigest])
+
+  if (!currentWallet) {
+    return null
   }
 
   return (
@@ -221,7 +229,7 @@ export default function Assets() {
         <SheetTitle>Crypto Portfolio</SheetTitle>
         <SheetDescription>Your current poils'token holdings</SheetDescription>
       </SheetHeader>
-      {isLoading ? (
+      {isLoading || isRefreshing ? (
         <LoadingAnimation />
       ) : (
         <>
@@ -232,8 +240,8 @@ export default function Assets() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Details</h3>
-              <Button variant="ghost" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
+              <Button variant="ghost" size="sm" onClick={refreshData} disabled={isRefreshing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
             </div>
