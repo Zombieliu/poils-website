@@ -25,7 +25,7 @@ export default function Assets() {
     <SheetContent className="w-[400px] sm:w-[540px] bg-pink-50">
       <SheetHeader>
         <SheetTitle>Crypto Portfolio</SheetTitle>
-        <SheetDescription>Your current cryptocurrency holdings</SheetDescription>
+        <SheetDescription>Your current poils'token holdings</SheetDescription>
       </SheetHeader>
       <div className="py-4">
         <h2 className="text-lg font-semibold">Value</h2>
@@ -72,7 +72,7 @@ export default function Assets() {
                       <DropdownMenuItem>Transfer</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      {/* <DropdownMenuItem>Edit</DropdownMenuItem> */}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

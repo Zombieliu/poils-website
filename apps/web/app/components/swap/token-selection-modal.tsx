@@ -24,7 +24,7 @@ function TokenSelectionModalOpen() {
     const [_,setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
     
     const getTokenImage = (symbol: string) => {
-      console.log(`https://hop.ag/tokens/${symbol}.svg`);
+      // console.log(`https://hop.ag/tokens/${symbol}.svg`);
       return symbol === 'SUI' ? `https://hop.ag/tokens/${symbol}.svg` : `/placeholder.svg?height=40&width=40`
     }
 

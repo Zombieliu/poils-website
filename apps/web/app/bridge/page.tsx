@@ -83,8 +83,8 @@ async function test() {
 
 
   return (
-    <div className="min-h-screen bg-pink-50 p-4">
-      <main className="max-w-2xl mx-auto space-y-6">
+    <div className="flex items-center justify-center min-h-screen bg-pink-50 p-4">
+      <main className="w-full max-w-2xl space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Bridge Assets</CardTitle>
