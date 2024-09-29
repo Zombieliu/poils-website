@@ -7,6 +7,7 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton"
 import { useAtom } from "jotai";    
 import { TokenSelectionOpen } from "../../../jotai/swap/swap";
 import { useRouter } from 'next/navigation';
+import TokenSelectionModal from "../../../components/swap/token-selection-modal";
 
 export default function Page({ params }: { params: { fromToken: string, toToken: string } }) {
     const [isTokenSelectionOpen, setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
@@ -90,10 +91,23 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
     const [payAmount, setPayAmount] = useState<string>('');
     const [receiveAmount, setReceiveAmount] = useState<string>('');
 
+    const [slippage, setSlippage] = useState("1.00");
+
     return (
         <main>
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-4">
                 <div className="w-full max-w-md bg-white rounded-3xl shadow-lg p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <button className="rounded-full p-2 hover:bg-gray-100">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21.8883 13.5C21.1645 18.3113 17.013 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C16.1006 2 19.6248 4.46819 21.1679 8" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M17 8H21.4C21.7314 8 22 7.73137 22 7.4V3" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
+                        <div className="bg-white border border-gray-200 rounded-full px-4 py-1 text-sm font-medium">
+                            {slippage}% slippage
+                        </div>
+                    </div>
                     <div className="space-y-4">
                         <div className="bg-white p-4 rounded-2xl">
                             <label className="block text-sm font-medium text-gray-500 mb-1">You pay</label>
@@ -156,6 +170,14 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
                     </div>
                 </div>
             </div>
+            <TokenSelectionModal 
+                isOpen={isTokenSelectionOpen} 
+                onClose={() => setTokenSelectionOpen(false)} 
+                onSelectToken={(token) => {
+                    // Handle token selection
+                    setTokenSelectionOpen(false);
+                }}
+            />
         </main>
     )
 }

@@ -12,14 +12,15 @@ import {
 import { RefreshCw, MoreHorizontal } from "lucide-react"
 import { Button } from "@repo/ui/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table"
+import { Skeleton } from "@repo/ui/components/ui/skeleton"
 import { Transaction, TransactionArgument } from "@0xobelisk/sui-client"
 import { obelisk_client } from "../jotai/obelisk"
 import { useAtom } from "jotai"
-import { toast } from "sonner";
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { toast } from "sonner"
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
 import { useEffect, useState } from "react"
-import { useCurrentWallet } from "@mysten/dapp-kit";
-import { useRouter } from 'next/navigation';
+import { useCurrentWallet } from "@mysten/dapp-kit"
+import { useRouter } from 'next/navigation'
 
 const tokenData = [
   { name: "Obelisk (OBL)", balance: 0.5, value: 15000, icon: "https://hop.ag/tokens/SUI.svg" },
@@ -28,21 +29,40 @@ const tokenData = [
   { name: "Cyferio (CYF)", balance: 100, value: 2000, icon: "https://hop.ag/tokens/SUI.svg" },
 ]
 
+const LoadingAnimation = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-4 w-[250px]" />
+    <Skeleton className="h-10 w-[200px]" />
+    <Skeleton className="h-4 w-[300px]" />
+    <Skeleton className="h-20 w-full" />
+  </div>
+)
+
 export default function Assets() {
   const [obelisk] = useAtom(obelisk_client)
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
-  const [digest, setDigest] = useState("");
-  const { currentWallet } = useCurrentWallet();
-  const router = useRouter();
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
+  const [digest, setDigest] = useState("")
+  const { currentWallet } = useCurrentWallet()
+  const router = useRouter()
+
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (!currentWallet) {
-      router.push('/'); // Redirect to home page if wallet is not connected
+      router.push('/')
     }
-  }, [currentWallet, router]);
+  }, [currentWallet, router])
 
   if (!currentWallet) {
-    return null; // Or you could return a loading indicator
+    return null
   }
 
   const handleTransfer = async() => {
@@ -195,76 +215,73 @@ export default function Assets() {
     );
   }
 
-
-  // const handleViewDetails = async() => {
-  //   console.log("View Details clicked");
-    
-  // }
-
   return (
     <SheetContent className="w-[400px] sm:w-[540px] bg-pink-50">
       <SheetHeader>
         <SheetTitle>Crypto Portfolio</SheetTitle>
         <SheetDescription>Your current poils'token holdings</SheetDescription>
       </SheetHeader>
-      <div className="py-4">
-        <h2 className="text-lg font-semibold">Value</h2>
-        <p className="text-4xl font-bold">$27,500</p>
-      </div>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Details</h3>
-          <Button variant="ghost" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Token Name</TableHead>
-              <TableHead className="text-right">Balance</TableHead>
-              <TableHead className="text-right">Value (USD)</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tokenData.map((token) => (
-              <TableRow key={token.name}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center">
-                    <img src={token.icon} alt={token.name} className="w-6 h-6 mr-2" />
-                    {token.name}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">{token.balance}</TableCell>
-                <TableCell className="text-right">${token.value.toLocaleString()}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      
-                      <DropdownMenuItem onClick={handleTransfer}>Transfer</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleTransferAll}>TransferAll</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleMint}>Mint</DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleBurn}>Burn</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {/* <DropdownMenuItem onClick={handleViewDetails}>View Details</DropdownMenuItem> */}
-                      {/* <DropdownMenuItem>Edit</DropdownMenuItem> */}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {isLoading ? (
+        <LoadingAnimation />
+      ) : (
+        <>
+          <div className="py-4">
+            <h2 className="text-lg font-semibold">Value</h2>
+            <p className="text-4xl font-bold">$27,500</p>
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Details</h3>
+              <Button variant="ghost" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Token Name</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Value (USD)</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tokenData.map((token) => (
+                  <TableRow key={token.name}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center">
+                        <img src={token.icon} alt={token.name} className="w-6 h-6 mr-2" />
+                        {token.name}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">{token.balance}</TableCell>
+                    <TableCell className="text-right">${token.value.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={handleTransfer}>Transfer</DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleTransferAll}>TransferAll</DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleMint}>Mint</DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleBurn}>Burn</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
     </SheetContent>
   )
 }
