@@ -83,7 +83,6 @@ export default function SwapInterface () {
             </div>
             <div className="text-gray-500 text-sm mt-1">$0.00</div>
           </div>
-          <ConnectButton className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-4 rounded-2xl text-lg" />
         </div>
         <div className="text-center text-gray-500 text-sm mt-4">
           Could not connect to routing API.

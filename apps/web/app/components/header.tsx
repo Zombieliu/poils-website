@@ -1,12 +1,18 @@
 import Link from "next/link"
-import React from "react"
+import React, { useState } from "react"
 import {
   ConnectButton,
+  ConnectModal,
+  useCurrentAccount,
 } from "@mysten/dapp-kit";
+import { Sheet } from "@repo/ui/components/ui/sheet"
+import Assets from "../assets/page"
+import { ChevronDown } from "lucide-react";
 
 export default function Header() {
- 
-
+  const currentAccount = useCurrentAccount();
+	const [open, setOpen] = useState(false);
+	const [assetsSheetOpen, setAssetsSheetOpen] = useState(false);
 
   
   return (
@@ -42,9 +48,12 @@ export default function Header() {
         {/* <Link href="/staking" className="text-sm font-medium hover:text-gray-600">
           Staking
         </Link> */}
-        <Link href="/assets" className="text-sm font-medium hover:text-gray-600">
+        <button
+          onClick={() => setAssetsSheetOpen(true)}
+          className="text-sm font-medium hover:text-gray-600"
+        >
           Assets
-        </Link>
+        </button>
         <Link href="/mint" className="text-sm font-medium hover:text-gray-600">
           Mint
         </Link>
@@ -59,14 +68,17 @@ export default function Header() {
           <ChevronDown className="ml-1 h-4 w-4" />
         </button> */}
       </nav>
-      <ConnectButton />
-      {/* <ConnectModal
+      {/* <ConnectButton /> */}
+      <ConnectModal
         trigger={
           <button disabled={!!currentAccount}> {currentAccount ? 'Connected' : 'Connect'}</button>
         }
         open={open}
         onOpenChange={(isOpen) => setOpen(isOpen)}
-      /> */}
+      />
+      <Sheet open={assetsSheetOpen} onOpenChange={setAssetsSheetOpen}>
+        <Assets />
+      </Sheet>
     </header>
   )
 }
