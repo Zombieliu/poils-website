@@ -66,6 +66,7 @@ export default function RootLayout({
                 <div>
                   <Header/>
                   <AppWrapper>{children}</AppWrapper>
+                  {/* {children} */}
                 </div>
                 </EnokiFlowProvider>
               </WalletProvider>

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@0xobelisk/sov-client": "0.2.8",
-    "@0xobelisk/sui-client": "0.5.22",
+    "@0xobelisk/sui-client": "0.5.23",
     "@mysten/dapp-kit": "^0.14.17",
     "@mysten/enoki": "^0.4.0",
     "@mysten/sui": "^1.7.0",

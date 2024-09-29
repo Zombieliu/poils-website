@@ -20,5 +20,7 @@ const init_obelisk_client = async () => {
 const obelisk_client = atom(init_obelisk_client);
 
 export {
-    obelisk_client
+    obelisk_client,
+    init_obelisk_client
+    
 }

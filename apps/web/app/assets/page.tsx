@@ -9,18 +9,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu"
-import { RefreshCw, MoreHorizontal } from "lucide-react"
+import { RefreshCw, MoreHorizontal, Send, Coins, Flame } from "lucide-react"
 import { Button } from "@repo/ui/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table"
 import { Skeleton } from "@repo/ui/components/ui/skeleton"
-import { Transaction, TransactionArgument } from "@0xobelisk/sui-client"
-import { obelisk_client } from "../jotai/obelisk"
+import { DevInspectResults,Transaction, TransactionArgument } from "@0xobelisk/sui-client"
+import { init_obelisk_client, obelisk_client } from "../jotai/obelisk"
 import { useAtom } from "jotai"
 import { toast } from "sonner"
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
 import { useEffect, useState, useCallback } from "react"
 import { useCurrentWallet } from "@mysten/dapp-kit"
 import { useRouter } from 'next/navigation'
+import { ASSETS_ID, WRAPPER_ID } from "../chain/config"
+import {useCurrentAccount } from '@mysten/dapp-kit';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@repo/ui/components/ui/dialog"
+import { Input } from "@repo/ui/components/ui/input"
+import { Label } from "@repo/ui/components/ui/label"
 
 const tokenData = [
   { name: "Obelisk (OBL)", balance: 0.5, value: 15000, icon: "https://hop.ag/tokens/SUI.svg" },
@@ -39,7 +44,6 @@ const LoadingAnimation = () => (
 )
 
 export default function Assets() {
-  const [obelisk] = useAtom(obelisk_client)
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction()
   const [digest, setDigest] = useState("")
   const { currentWallet } = useCurrentWallet()
@@ -47,6 +51,14 @@ export default function Assets() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const account = useCurrentAccount();
+  const [assetMetadata, setAssetMetadata] = useState<any[]>([]);
+  const [totalValue, setTotalValue] = useState("N/A");
+  const [actionDialogOpen, setActionDialogOpen] = useState(false)
+  const [selectedAction, setSelectedAction] = useState<string | null>(null)
+  const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null)
+  const [quantity, setQuantity] = useState("")
+  const [recipientAddress, setRecipientAddress] = useState("")
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,31 +68,123 @@ export default function Assets() {
     return () => clearTimeout(timer)
   }, [])
 
+  const refreshData = useCallback(() => {
+    setIsRefreshing(true)
+    query_assets().finally(() => {
+      setIsRefreshing(false)
+    })
+  }, [])
+
+  const query_assets = async () => {
+    if (!account?.address) {
+      console.log("Account address not available yet");
+      return;
+    }
+
+    const obelisk = await init_obelisk_client()
+    let tx = new Transaction();
+    const assets = tx.object(ASSETS_ID)
+    const owner = tx.pure.address(account?.address)
+    let params: TransactionArgument[] = [
+      assets,
+      owner
+    ];
+    let query_own_assets_id_list = await obelisk.query.assets_system.owned_assets(tx, params) as DevInspectResults
+    let owner_asset_id_list = obelisk.view(query_own_assets_id_list)[0];  
+    console.log("owner_asset_id_list", owner_asset_id_list)
+
+    // Fetch metadata and balance for each asset
+    const assetPromises = owner_asset_id_list.map(async (assetId: number) => {
+      // Create a new Transaction for metadata query
+      let tx2 = new Transaction();
+      let assets = tx2.object(ASSETS_ID)
+      let asset_id = tx2.pure.u32(assetId)
+      
+      // Fetch metadata
+      let metadataParams: TransactionArgument[] = [
+        assets,
+        asset_id
+      ];
+      let asset_metadata = await obelisk.query.assets_system.metadata_of(tx2, metadataParams) as DevInspectResults;
+      
+      // Create a new Transaction for balance query
+      let tx3 = new Transaction();
+      let assets3 = tx3.object(ASSETS_ID)
+      let asset_id3 = tx3.pure.u32(assetId)
+      
+      // Fetch balance
+      let balanceParams: TransactionArgument[] = [
+        assets3,
+        asset_id3,
+        tx3.pure.address(account?.address)
+      ];
+      let balance_query = await obelisk.query.assets_system.balance_of(tx3, balanceParams) as DevInspectResults;
+      
+      return {
+        id: assetId,
+        metadata: obelisk.view(asset_metadata),
+        balance: obelisk.view(balance_query)
+      };
+    });
+    const assetResults = await Promise.all(assetPromises);
+
+    setAssetMetadata(assetResults);
+    console.log("Asset data:", assetResults);
+  }
+
   useEffect(() => {
     if (!currentWallet) {
       router.push('/')
+      return;
     }
-  }, [currentWallet, router])
 
-  const refreshData = useCallback(() => {
-    setIsRefreshing(true)
-    setTimeout(() => {
-      setIsRefreshing(false)
-    }, 2000)
-  }, [])
+    query_assets()
+  }, [currentWallet, router, account])
 
-  const handleTransfer = useCallback(async () => {
+  const handleActionClick = (action: string, assetId: number) => {
+    setSelectedAction(action)
+    setSelectedAssetId(assetId)
+    setActionDialogOpen(true)
+  }
+
+  const handleActionConfirm = async () => {
+    if (!selectedAction || selectedAssetId === null) return
+
+    const amount = BigInt(parseFloat(quantity) * Math.pow(10, assetMetadata.find(a => a.id === selectedAssetId)?.metadata[3] || 0))
+
+    switch (selectedAction) {
+      case "transfer":
+        await handleTransfer(selectedAssetId, recipientAddress, amount)
+        break
+      case "transferAll":
+        await handleTransferAll(selectedAssetId, recipientAddress)
+        break
+      case "mint":
+        await handleMint(selectedAssetId, recipientAddress, amount)
+        break
+      case "burn":
+        await handleBurn(selectedAssetId, recipientAddress, amount)
+        break
+    }
+
+    setActionDialogOpen(false)
+    setQuantity("")
+    setRecipientAddress("")
+  }
+
+  const handleTransfer = useCallback(async (assetId: number, to: string, amount: bigint) => {
     console.log("Transfer clicked");
+    const obelisk = await init_obelisk_client()
     let tx = new Transaction();
-    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
-    const assets_id = tx.pure.u32(0);
-    const to = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
-    const amount = tx.pure.u64(1);
+    const assets = tx.object(ASSETS_ID);
+    const assets_id = tx.pure.u32(assetId);
+    const toAddress = tx.pure.address(to);
+    const transferAmount = tx.pure.u64(amount);
     let params: TransactionArgument[] = [
-       assets_object,
+       assets,
        assets_id,
-       to,
-       amount
+       toAddress,
+       transferAmount
       ];
     await obelisk.tx.assets_system.transfer(tx, params, undefined, true);
     await signAndExecuteTransaction(
@@ -91,7 +195,7 @@ export default function Assets() {
       {
         onSuccess: (result) => {
           console.log('executed transaction', result);
-          toast("Translation Successful", {
+          toast("Transfer Successful", {
             description: new Date().toUTCString(),
             action: {
               label: "Check in Explorer",
@@ -99,24 +203,26 @@ export default function Assets() {
             },
           });
           setDigest(result.digest);
+          refreshData();
         },
         onError: error => {
           console.log('executed transaction', error);
         },
       },
     );
-  }, [obelisk, signAndExecuteTransaction, setDigest])
+  }, [signAndExecuteTransaction, setDigest, refreshData])
 
-  const handleTransferAll = useCallback(async () => {
+  const handleTransferAll = useCallback(async (assetId: number, to: string) => {
     console.log("TransferAll clicked");
+    const obelisk = await init_obelisk_client()
     let tx = new Transaction();
-    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
-    const assets_id = tx.pure.u32(0);
-    const to = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
+    const assets = tx.object(ASSETS_ID);
+    const assets_id = tx.pure.u32(assetId);
+    const toAddress = tx.pure.address(to);
     let params: TransactionArgument[] = [
-       assets_object,
+       assets,
        assets_id,
-       to,
+       toAddress,
       ];
     await obelisk.tx.assets_system.transfer_all(tx, params, undefined, true);
     await signAndExecuteTransaction(
@@ -135,26 +241,28 @@ export default function Assets() {
             },
           });
           setDigest(result.digest);
+          refreshData();
         },
         onError: error => {
           console.log('executed transaction', error);
         },
       },
     );
-  }, [obelisk, signAndExecuteTransaction, setDigest])
+  }, [signAndExecuteTransaction, setDigest, refreshData])
 
-  const handleMint = useCallback(async () => {
+  const handleMint = useCallback(async (assetId: number, to: string, amount: bigint) => {
     console.log("Mint clicked");
+    const obelisk = await init_obelisk_client()
     let tx = new Transaction();
-    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
-    const assets_id = tx.pure.u32(0);
-    const to = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
-    const amount = tx.pure.u64(1);
+    const assets = tx.object(ASSETS_ID);
+    const assets_id = tx.pure.u32(assetId);
+    const toAddress = tx.pure.address(to);
+    const mintAmount = tx.pure.u64(amount);
     let params: TransactionArgument[] = [
-       assets_object,
+       assets,
        assets_id,
-       to,
-       amount
+       toAddress,
+       mintAmount
       ];
     await obelisk.tx.assets_system.mint(tx, params, undefined, true);
     await signAndExecuteTransaction(
@@ -173,26 +281,28 @@ export default function Assets() {
             },
           });
           setDigest(result.digest);
+          refreshData();
         },
         onError: error => {
           console.log('executed transaction', error);
         },
       },
     );
-  }, [obelisk, signAndExecuteTransaction, setDigest])
+  }, [signAndExecuteTransaction, setDigest, refreshData])
 
-  const handleBurn = useCallback(async () => {
+  const handleBurn = useCallback(async (assetId: number, who: string, amount: bigint) => {
     console.log("Burn clicked");
+    const obelisk = await init_obelisk_client()
     let tx = new Transaction();
-    const assets_object = tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df");
-    const assets_id = tx.pure.u32(0);
-    const who = tx.pure.address("0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693");
-    const amount = tx.pure.u64(1);
+    const assets = tx.object(ASSETS_ID);
+    const assets_id = tx.pure.u32(assetId);
+    const whoAddress = tx.pure.address(who);
+    const burnAmount = tx.pure.u64(amount);
     let params: TransactionArgument[] = [
-       assets_object,
+       assets,
        assets_id,
-       who,
-       amount
+       whoAddress,
+       burnAmount
       ];
     await obelisk.tx.assets_system.transfer_all(tx, params, undefined, true);
     await signAndExecuteTransaction(
@@ -211,13 +321,14 @@ export default function Assets() {
             },
           });
           setDigest(result.digest);
+          refreshData();
         },
         onError: error => {
           console.log('executed transaction', error);
         },
       },
     );
-  }, [obelisk, signAndExecuteTransaction, setDigest])
+  }, [signAndExecuteTransaction, setDigest, refreshData])
 
   if (!currentWallet) {
     return null
@@ -235,7 +346,7 @@ export default function Assets() {
         <>
           <div className="py-4">
             <h2 className="text-lg font-semibold">Value</h2>
-            <p className="text-4xl font-bold">$27,500</p>
+            <p className="text-4xl font-bold">${totalValue}</p>
           </div>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -255,16 +366,22 @@ export default function Assets() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tokenData.map((token) => (
-                  <TableRow key={token.name}>
+                {assetMetadata.map((asset) => (
+                  <TableRow key={asset.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center">
-                        <img src={token.icon} alt={token.name} className="w-6 h-6 mr-2" />
-                        {token.name}
+                        <img 
+                          src={asset.metadata[4] || "/default-icon.png"} 
+                          alt={asset.metadata[0] || `Asset ${asset.id}`} 
+                          className="w-6 h-6 mr-2" 
+                        />
+                        {asset.metadata[0] || `Asset ${asset.id}`}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">{token.balance}</TableCell>
-                    <TableCell className="text-right">${token.value.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      {(Number(asset.balance[0]) / Math.pow(10, asset.metadata[3])).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">$N/A</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -275,11 +392,23 @@ export default function Assets() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={handleTransfer}>Transfer</DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleTransferAll}>TransferAll</DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleMint}>Mint</DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleBurn}>Burn</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleActionClick("transfer", asset.id)}>
+                            <Send className="mr-2 h-4 w-4" />
+                            <span>Transfer</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleActionClick("transferAll", asset.id)}>
+                            <Send className="mr-2 h-4 w-4" />
+                            <span>Transfer All</span>
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleActionClick("mint", asset.id)}>
+                            <Coins className="mr-2 h-4 w-4" />
+                            <span>Mint</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleActionClick("burn", asset.id)}>
+                            <Flame className="mr-2 h-4 w-4" />
+                            <span>Burn</span>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -290,6 +419,45 @@ export default function Assets() {
           </div>
         </>
       )}
+      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogDescription>
+              Please enter the quantity and recipient address for the selected action.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quantity" className="text-right">
+                Quantity
+              </Label>
+              <Input
+                id="quantity"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="recipientAddress" className="text-right">
+                Recipient Address
+              </Label>
+              <Input
+                id="recipientAddress"
+                value={recipientAddress}
+                onChange={(e) => setRecipientAddress(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit" onClick={handleActionConfirm}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SheetContent>
   )
 }

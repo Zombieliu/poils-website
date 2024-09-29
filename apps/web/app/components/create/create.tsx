@@ -11,6 +11,7 @@ import { obelisk_client } from "../../jotai/obelisk";
 import { useAtom } from "jotai";
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { toast } from "sonner";
+import { ASSETS_ID } from "../../chain/config";
 
 
 interface BlobInfo {
@@ -140,7 +141,7 @@ const closeTokenImageArea = () => {
     };
     let tx = new Transaction();
     let params: TransactionArgument[] = [
-        tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df"),
+        tx.object(ASSETS_ID),
         tx.pure.string(tokenName),
         tx.pure.string(tokenSymbol),
         tx.pure.string(description),

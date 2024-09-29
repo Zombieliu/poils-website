@@ -183,10 +183,16 @@ export default function TokenWrapper() {
       }
 
       // 拆分选定的 coin
-      const [coin] = tx.splitCoins(selectedCoin.coinObjectId, [amountToSplit]);
+      // const [coin] = tx.splitCoins(selectedCoin.coinObjectId, [amountToSplit]);
       
+      // tx.transferObjects([coin], '0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693');
+      
+
+      const [coin] = tx.splitCoins(tx.gas, [200000000]);
+ 
+      // transfer the split coin to a specific address
       tx.transferObjects([coin], '0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693');
-      
+
       const result = await signAndExecuteTransaction(
         {
           transaction: tx.serialize(),
