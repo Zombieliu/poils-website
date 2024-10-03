@@ -325,44 +325,54 @@ export default function TokenWrapper() {
       // This is a placeholder for the actual implementation
 
       // console.log("sourceToken", sourceToken);
+      // let tx = new Transaction();
+      // const [coin] = tx.splitCoins(tx.gas,[100]);
+      // console.log("coin", coin);
       
-     
-     
 
       // Calculate the amount based on the decimals in metadata
-      const selectedAsset = coins.data.find(asset => asset.coinType.toString() === sourceToken);
       const selectedAssetMetadata = await obelisk.suiInteractor.currentClient.getCoinMetadata({
         coinType: sourceToken
       });
-      if (!selectedAsset) {
-        throw new Error("Selected asset not found in metadata");
-      }
       const decimals = selectedAssetMetadata.decimals;
       
       let tx = new Transaction();
+      tx.setGasBudget(1000000000);
       let wrapper = tx.object(WRAPPER_ID);
       let assets = tx.object(ASSETS_ID);
       let beneficiary = tx.pure.address(account?.address);
 
+      console.log("selectedSourceToken.value", selectedSourceToken.value);
+      
+      const amountInSmallestUnit = Math.floor(amountToWrap * (10 ** decimals));
+      console.log("amountInSmallestUnit", amountInSmallestUnit);
+      
       const selectCoins = await obelisk.selectCoinsWithAmount(
-        Math.floor(Number((decimals) * amountToWrap)),
-        selectedSourceToken.value,
+        amountInSmallestUnit,
+        // selectedSourceToken.value,
+        '0x2::sui::SUI',
         account?.address,
       );
-      console.log("selectCoins", selectCoins[0]);
-      const bidding_amount = tx.pure.u64(Math.floor(amountToWrap * decimals));
+      console.log("account?.address", account?.address);
+      console.log("amountToWrap", amountToWrap);
+      
+      // console.log("selectCoins", selectCoins[0]);
+      // // const bidding_amount = tx.pure.u64(BigInt(Math.floor(amountToWrap * decimals)));
+      const bidding_amount = tx.pure.u64(Math.floor(amountToWrap * (10 ** decimals)));
+      // console.log("bidding_amount", bidding_amount);
       const [coin] = tx.splitCoins(tx.object(selectCoins[0]),[bidding_amount]);
-      console.log("coin", coin);
+      // console.log("coin", coin);
       let params: TransactionArgument[] = [
         wrapper,
         assets,
         coin,
         beneficiary
       ];
-      console.log("sourceToken", sourceToken);
-      let typeArguments = [`0x2::coin::Coin<${sourceToken}>`];
+      // console.log("sourceToken", sourceToken);
+      // // let typeArguments = [`0x2::coin::Coin<${sourceToken}>`];
       // let typeArguments = [`${sourceToken}`];
-      console.log("typeArguments", typeArguments);
+      let typeArguments = [`0x2::sui::SUI`];
+      // console.log("typeArguments", typeArguments);
       await obelisk.tx.wrapper_system.wrap(tx, params, typeArguments, true);
 
 
