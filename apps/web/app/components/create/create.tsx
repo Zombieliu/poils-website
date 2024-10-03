@@ -7,7 +7,7 @@ import { Label } from "@repo/ui/components/ui/label"
 import { Textarea } from "@repo/ui/components/ui/textarea"
 import { InfoCircledIcon } from "@radix-ui/react-icons"
 import { Transaction, TransactionArgument } from "@0xobelisk/sui-client";
-import { obelisk_client } from "../../jotai/obelisk";
+import { init_obelisk_client, obelisk_client } from "../../jotai/obelisk";
 import { useAtom } from "jotai";
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { toast } from "sonner";
@@ -33,7 +33,6 @@ export default function Create() {
   const [description, setDescription] = useState("");
   const [decimals, setDecimals] = useState("");
   const [isFormComplete, setIsFormComplete] = useState(false);
-  const [obelisk] = useAtom(obelisk_client)
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [digest, setDigest] = useState("");
   
@@ -132,6 +131,7 @@ const closeTokenImageArea = () => {
   const handleMint = async() => {
     // 在这里添加铸造逻辑
     console.log("Minting token...");
+    const obelisk = await init_obelisk_client()
     const mintInfo = {
       tokenName,
       tokenSymbol,

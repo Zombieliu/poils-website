@@ -150,20 +150,18 @@ export default function Assets() {
   const handleActionConfirm = async () => {
     if (!selectedAction || selectedAssetId === null) return
 
-    const amount = BigInt(parseFloat(quantity) * Math.pow(10, assetMetadata.find(a => a.id === selectedAssetId)?.metadata[3] || 0))
-
     switch (selectedAction) {
       case "transfer":
-        await handleTransfer(selectedAssetId, recipientAddress, amount)
+        await handleTransfer(selectedAssetId, recipientAddress, BigInt(parseFloat(quantity) * Math.pow(10, assetMetadata.find(a => a.id === selectedAssetId)?.metadata[3] || 0)))
         break
       case "transferAll":
         await handleTransferAll(selectedAssetId, recipientAddress)
         break
       case "mint":
-        await handleMint(selectedAssetId, recipientAddress, amount)
+        await handleMint(selectedAssetId, recipientAddress, BigInt(parseFloat(quantity) * Math.pow(10, assetMetadata.find(a => a.id === selectedAssetId)?.metadata[3] || 0)))
         break
       case "burn":
-        await handleBurn(selectedAssetId, recipientAddress, amount)
+        await handleBurn(selectedAssetId, recipientAddress, BigInt(parseFloat(quantity) * Math.pow(10, assetMetadata.find(a => a.id === selectedAssetId)?.metadata[3] || 0)))
         break
     }
 
@@ -424,21 +422,25 @@ export default function Assets() {
           <DialogHeader>
             <DialogTitle>Confirm Action</DialogTitle>
             <DialogDescription>
-              Please enter the quantity and recipient address for the selected action.
+              {selectedAction === "transferAll"
+                ? "Please enter the recipient address for the transfer all action."
+                : "Please enter the quantity and recipient address for the selected action."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="quantity" className="text-right">
-                Quantity
-              </Label>
-              <Input
-                id="quantity"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
+            {selectedAction !== "transferAll" && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="quantity" className="text-right">
+                  Quantity
+                </Label>
+                <Input
+                  id="quantity"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+            )}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="recipientAddress" className="text-right">
                 Recipient Address

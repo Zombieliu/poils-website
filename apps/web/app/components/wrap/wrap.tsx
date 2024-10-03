@@ -8,11 +8,13 @@ import { Label } from "@repo/ui/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
 import { Switch } from "@repo/ui/components/ui/switch"
 import { useAtom } from 'jotai'
-import { obelisk_client } from '../../jotai/obelisk'
+import { init_obelisk_client, obelisk_client } from '../../jotai/obelisk'
 import { useCurrentAccount } from '@mysten/dapp-kit'
 import { DevInspectResults, Transaction, TransactionArgument } from '@0xobelisk/sui-client'
 import { useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 import { toast } from "sonner";
+import { ASSETS_ID, WRAPPER_ID } from '../../chain/config'
+import { CoinStruct } from '@0xobelisk/sui-client'
 
 // Token logo components
 const EthLogo = () => (
@@ -55,15 +57,16 @@ export default function TokenWrapper() {
   const [sourceToken, setSourceToken] = useState("")
   const [targetToken, setTargetToken] = useState("")
   const [amount, setAmount] = useState("")
-  const [obelisk] = useAtom(obelisk_client)
   const [coins, setCoins] = useState({ data: [] });
   const [coins_metadata, setCoinsMetadata] = useState([]);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [digest, setDigest] = useState("");
+  const [assetMetadata, setAssetMetadata] = useState<any[]>([]);
 
   useEffect(() => {
     const getCoins = async () => {
       try {
+        const obelisk = await init_obelisk_client()
         const coinsData = await obelisk.suiInteractor.currentClient.getCoins({
           owner: account?.address,
         });
@@ -82,11 +85,61 @@ export default function TokenWrapper() {
         toast.error("Failed to fetch coins data");
       }
     }
-
     if (account?.address) {
       getCoins();
     }
   }, [account?.address]);
+
+  useEffect(() => {
+    const getWrapCoins = async () => {
+      const obelisk = await init_obelisk_client()
+      let tx = new Transaction();
+      const wrapper = tx.object(WRAPPER_ID)
+      const assets = tx.object(ASSETS_ID)
+      let params: TransactionArgument[] = [
+        wrapper,
+        assets
+      ];
+      let query_wrap_token_list = await obelisk.query.wrapper_system.wrapped_assets(tx, params) as DevInspectResults
+      let wrap_token_list = obelisk.view(query_wrap_token_list)[0];  
+
+      const assetPromises = wrap_token_list.map(async (assetId: number) => {
+        let tx2 = new Transaction();
+        let assets = tx2.object(ASSETS_ID)
+        let asset_id = tx2.pure.u32(assetId)
+        
+        let metadataParams: TransactionArgument[] = [
+          assets,
+          asset_id
+        ];
+        let asset_metadata = await obelisk.query.assets_system.metadata_of(tx2, metadataParams) as DevInspectResults;
+
+
+            // Create a new Transaction for balance query
+      let tx3 = new Transaction();
+      let assets3 = tx3.object(ASSETS_ID)
+      let asset_id3 = tx3.pure.u32(assetId)
+
+         // Fetch balance
+      let balanceParams: TransactionArgument[] = [
+        assets3,
+        asset_id3,
+        tx3.pure.address(account?.address)
+      ];
+      let balance_query = await obelisk.query.assets_system.balance_of(tx3, balanceParams) as DevInspectResults;
+      
+      return {
+        id: assetId,
+        metadata: obelisk.view(asset_metadata),
+        balance: obelisk.view(balance_query)
+      };
+      });
+      const assetResults = await Promise.all(assetPromises);
+      setAssetMetadata(assetResults);
+      console.log("assetResults", assetResults)
+    }
+    getWrapCoins();
+  }, [])
 
   const internalTokens = [
     { value: "PETH", label: "PETH", logo: <EthLogo /> },
@@ -108,20 +161,68 @@ export default function TokenWrapper() {
           iconUrl = 'https://hop.ag/tokens/SUI.svg';
         }
 
-        const balance = Number(coin.balance) / Math.pow(10, metadata?.decimals || 9);
+        // Calculate balance using the correct number of decimal places
+        const decimals = metadata?.metadata[4] || 9; // Use metadata[4] for decimals, default to 9 if not available
+        const rawBalance = BigInt(coin.balance);
+        const balance = Number(rawBalance) / Math.pow(10, decimals);
 
         tokenMap.set(symbol, {
           value: coin.coinType,
           symbol: symbol,
-          balance: balance.toFixed(4), // Limit to 4 decimal places
+          balance: balance.toFixed(4), // Format to 4 decimal places for display
           logo: <img src={iconUrl} alt={symbol} width="20" height="20" style={{marginRight: '8px'}} />,
-          rawBalance: coin.balance
+          rawBalance: coin.balance,
+          decimals: decimals
         });
       }
     });
 
     return Array.from(tokenMap.values());
   }, [coins.data, coins_metadata]);
+
+  // Updated targetTokens calculation (for wrapping)
+  const targetTokens = useMemo(() => {
+    return assetMetadata.map(asset => {
+      console.log(`Processing asset:`, asset);
+      
+      const rawBalance = BigInt(asset.balance);
+      console.log(`Raw balance:`, rawBalance.toString());
+      
+      const decimals = asset.metadata[3];
+      console.log(`Decimals:`, decimals);
+      
+      const scaleFactor = BigInt(10 ** decimals);
+      console.log(`Scale factor:`, scaleFactor.toString());
+      
+      const scaledBalance = rawBalance * BigInt(10000);
+      console.log(`Scaled balance:`, scaledBalance.toString());
+      
+      const dividedBalance = scaledBalance / scaleFactor;
+      console.log(`Divided balance:`, dividedBalance.toString());
+      
+      const finalBalance = Number(dividedBalance) / 10000;
+      console.log(`Final balance:`, finalBalance);
+      
+      return {
+        value: asset.id.toString(),
+        symbol: asset.metadata[1],
+        balance: finalBalance.toFixed(4),
+        logo: <img src={asset.metadata[4]} alt={asset.metadata[1]} width="20" height="20" style={{marginRight: '8px'}} />,
+      };
+    });
+  }, [assetMetadata]);
+
+  console.log(`Final targetTokens:`, targetTokens);
+
+  // Updated calculation for unwrapping source tokens (with balance)
+  const unwrapSourceTokens = useMemo(() => {
+    return assetMetadata.map(asset => ({
+      value: asset.id.toString(),
+      symbol: asset.metadata[1],
+      balance: (Number(BigInt(asset.balance)) / Math.pow(10, asset.metadata[3])).toFixed(4),
+      logo: <img src={asset.metadata[4]} alt={asset.metadata[1]} width="20" height="20" style={{marginRight: '8px'}} />,
+    }));
+  }, [assetMetadata]);
 
   // Swap tokens when isWrap changes
   useEffect(() => {
@@ -131,69 +232,141 @@ export default function TokenWrapper() {
 
   const handleWrapToggle = (checked: boolean) => {
     setIsWrap(checked);
+    // 清空选择，防止用户混淆
+    setSourceToken("");
+    setTargetToken("");
   };
 
-  // Determine which tokens to use for source and target based on isWrap
-  const currentSourceTokens = isWrap ? sourceTokens : internalTokens;
-  const currentTargetTokens = isWrap ? internalTokens : sourceTokens;
+  // Updated currentSourceTokens and currentTargetTokens
+  const currentSourceTokens = useMemo(() => {
+    return isWrap ? sourceTokens : unwrapSourceTokens;
+  }, [isWrap, sourceTokens, unwrapSourceTokens]);
+
+  const currentTargetTokens = useMemo(() => {
+    if (isWrap) {
+      return assetMetadata.map(asset => ({
+        value: asset.id.toString(),
+        symbol: asset.metadata[1],
+        balance: (Number(BigInt(asset.balance)) / Math.pow(10, asset.metadata[3])).toFixed(4),
+        logo: <img src={asset.metadata[4]} alt={asset.metadata[1]} width="20" height="20" style={{marginRight: '8px'}} />,
+      }));
+    } else {
+      return sourceTokens.map(token => ({
+        ...token,
+        balance: token.balance, // Use the original balance from sourceTokens
+      }));
+    }
+  }, [isWrap, assetMetadata, sourceTokens]);
+
+  useEffect(() => {
+    if (isWrap) {
+      setSourceToken(sourceTokens[0]?.value || "");
+      setTargetToken(currentTargetTokens[0]?.value || "");
+    } else {
+      setSourceToken(currentSourceTokens[0]?.value || "");
+      setTargetToken(currentTargetTokens[0]?.value || "");
+    }
+  }, [isWrap, sourceTokens, currentSourceTokens, currentTargetTokens]);
 
   const handleWrap = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log("wrap");
-    
-    // 确保 amount 是一个有效的数字
-    const amountToSplit = parseInt(amount);
-    if (isNaN(amountToSplit) || amountToSplit <= 0) {
+
+    const obelisk = await init_obelisk_client()
+
+    // Ensure amount is a valid number
+    const amountToWrap = parseFloat(amount);
+    if (isNaN(amountToWrap) || amountToWrap <= 0) {
       toast.error("Invalid amount", {
         description: "Please enter a valid positive number.",
       });
       return;
     }
 
-    // 确保用户选择了 Source Token
-    if (!sourceToken) {
-      toast.error("Source Token not selected", {
-        description: "Please select a source token.",
+    // Ensure source and target tokens are selected
+    if (!sourceToken || !targetToken) {
+      toast.error("Tokens not selected", {
+        description: "Please select both source and target tokens.",
+      });
+      return;
+    }
+
+    // Find the selected source and target tokens
+    const selectedSourceToken = currentSourceTokens.find(token => token.value === sourceToken);
+    const selectedTargetToken = currentTargetTokens.find(token => token.value === targetToken);
+
+    if (!selectedSourceToken || !selectedTargetToken) {
+      toast.error("Token selection error", {
+        description: "Unable to find the selected tokens.",
+      });
+      return;
+    }
+    // Check if the token names are consistent (ignoring the 'P' prefix for wrapped tokens)
+    const sourceTokenName = selectedSourceToken.symbol.replace(/^P/, '');
+    const targetTokenName = selectedTargetToken.symbol.replace(/^P/, '');
+
+    if (sourceTokenName !== targetTokenName) {
+      toast.error("Token mismatch", {
+        description: "Source and target tokens must be the same type for wrapping.",
+      });
+      return;
+    }
+
+    // Check if the user has sufficient balance
+    if (parseFloat(selectedSourceToken.balance) < amountToWrap) {
+      toast.error("Insufficient balance", {
+        description: `You don't have enough balance in the selected ${selectedSourceToken.symbol} token.`,
       });
       return;
     }
 
     try {
+      // Implement the actual wrapping logic here
+      // This is a placeholder for the actual implementation
+
+      // console.log("sourceToken", sourceToken);
+      
+     
+     
+
+      // Calculate the amount based on the decimals in metadata
+      const selectedAsset = coins.data.find(asset => asset.coinType.toString() === sourceToken);
+      const selectedAssetMetadata = await obelisk.suiInteractor.currentClient.getCoinMetadata({
+        coinType: sourceToken
+      });
+      if (!selectedAsset) {
+        throw new Error("Selected asset not found in metadata");
+      }
+      const decimals = selectedAssetMetadata.decimals;
+      
       let tx = new Transaction();
-      
-      // 从 coins 数组中找到用户选择的 coin
-      const selectedCoin = coins.data.find(coin => 
-        coin.coinType.toLowerCase() === sourceToken.toLowerCase()
+      let wrapper = tx.object(WRAPPER_ID);
+      let assets = tx.object(ASSETS_ID);
+      let beneficiary = tx.pure.address(account?.address);
+
+      const selectCoins = await obelisk.selectCoinsWithAmount(
+        Math.floor(Number((decimals) * amountToWrap)),
+        selectedSourceToken.value,
+        account?.address,
       );
+      console.log("selectCoins", selectCoins[0]);
+      const bidding_amount = tx.pure.u64(Math.floor(amountToWrap * decimals));
+      const [coin] = tx.splitCoins(tx.object(selectCoins[0]),[bidding_amount]);
+      console.log("coin", coin);
+      let params: TransactionArgument[] = [
+        wrapper,
+        assets,
+        coin,
+        beneficiary
+      ];
+      console.log("sourceToken", sourceToken);
+      let typeArguments = [`0x2::coin::Coin<${sourceToken}>`];
+      // let typeArguments = [`${sourceToken}`];
+      console.log("typeArguments", typeArguments);
+      await obelisk.tx.wrapper_system.wrap(tx, params, typeArguments, true);
 
-      if (!selectedCoin) {
-        console.log("All available coins:", coins.data.map(c => c.coinType));
-        toast.error("Selected coin not found", {
-          description: `Unable to find the selected ${sourceToken} coin.`,
-        });
-        return;
-      }
 
-      // 检查选择的 coin 是否有足够的余额
-      if (BigInt(selectedCoin.balance) < BigInt(amountToSplit)) {
-        toast.error("Insufficient balance", {
-          description: `You don't have enough balance in the selected ${sourceToken} coin.`,
-        });
-        return;
-      }
-
-      // 拆分选定的 coin
-      // const [coin] = tx.splitCoins(selectedCoin.coinObjectId, [amountToSplit]);
-      
-      // tx.transferObjects([coin], '0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693');
-      
-
-      const [coin] = tx.splitCoins(tx.gas, [200000000]);
- 
-      // transfer the split coin to a specific address
-      tx.transferObjects([coin], '0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693');
-
-      const result = await signAndExecuteTransaction(
+      await signAndExecuteTransaction(
         {
           transaction: tx.serialize(),
           chain: `sui:testnet`,
@@ -201,8 +374,8 @@ export default function TokenWrapper() {
         {
           onSuccess: (result) => {
             console.log('executed transaction', result);
-            toast.success("Transaction Successful", {
-              description: `Wrapped ${amountToSplit} ${sourceToken} tokens at ${new Date().toUTCString()}`,
+            toast("Translation Successful", {
+              description: new Date().toUTCString(),
               action: {
                 label: "Check in Explorer",
                 onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
@@ -210,8 +383,14 @@ export default function TokenWrapper() {
             });
             setDigest(result.digest);
           },
+          onError: error => {
+            console.log('executed transaction', error);
+          },
         },
       );
+      // Reset the amount after successful wrap
+      setAmount("");
+
     } catch (error) {
       console.error('Error executing transaction:', error);
       toast.error("Transaction Failed", {
@@ -219,6 +398,96 @@ export default function TokenWrapper() {
       });
     }
   };
+    
+    // let tx = new Transaction();
+    // let wrapper = tx.object(WRAPPER_ID),
+    // let assets = tx.object(ASSETS_ID),
+    // let coin = 
+    // let beneficiary = account?.address
+    
+    // let params: TransactionArgument[] = [
+    //   wrapper,
+    //   assets
+    //   ];
+    // await obelisk.tx.wrapper_system.wrap(tx, params, undefined, true);
+    // 确保 amount 是一个有效的数字
+    // const amountToSplit = parseInt(amount);
+    // if (isNaN(amountToSplit) || amountToSplit <= 0) {
+    //   toast.error("Invalid amount", {
+    //     description: "Please enter a valid positive number.",
+    //   });
+    //   return;
+    // }
+
+    // // 确保用户选择了 Source Token
+    // if (!sourceToken) {
+    //   toast.error("Source Token not selected", {
+    //     description: "Please select a source token.",
+    //   });
+    //   return;
+    // }
+
+    // try {
+    //   let tx = new Transaction();
+      
+    //   // 从 coins 数组中找到用户选择的 coin
+    //   const selectedCoin = coins.data.find(coin => 
+    //     coin.coinType.toLowerCase() === sourceToken.toLowerCase()
+    //   );
+
+    //   if (!selectedCoin) {
+    //     console.log("All available coins:", coins.data.map(c => c.coinType));
+    //     toast.error("Selected coin not found", {
+    //       description: `Unable to find the selected ${sourceToken} coin.`,
+    //     });
+    //     return;
+    //   }
+
+    //   // 检查选择的 coin 是否有足够的余额
+    //   if (BigInt(selectedCoin.balance) < BigInt(amountToSplit)) {
+    //     toast.error("Insufficient balance", {
+    //       description: `You don't have enough balance in the selected ${sourceToken} coin.`,
+    //     });
+    //     return;
+    //   }
+
+    //   // 拆分选定的 coin
+    //   // const [coin] = tx.splitCoins(selectedCoin.coinObjectId, [amountToSplit]);
+      
+    //   // tx.transferObjects([coin], '0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693');
+      
+
+    //   const [coin] = tx.splitCoins(tx.gas, [200000000]);
+ 
+    //   // transfer the split coin to a specific address
+    //   tx.transferObjects([coin], '0xbb3e90c52cb585aeb926edb6fb3d01146d47e96d9692394bd9d691ce1b0bd693');
+
+    //   const result = await signAndExecuteTransaction(
+    //     {
+    //       transaction: tx.serialize(),
+    //       chain: `sui:testnet`,
+    //     },
+    //     {
+    //       onSuccess: (result) => {
+    //         console.log('executed transaction', result);
+    //         toast.success("Transaction Successful", {
+    //           description: `Wrapped ${amountToSplit} ${sourceToken} tokens at ${new Date().toUTCString()}`,
+    //           action: {
+    //             label: "Check in Explorer",
+    //             onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+    //           },
+    //         });
+    //         setDigest(result.digest);
+    //       },
+    //     },
+    //   );
+    // } catch (error) {
+    //   console.error('Error executing transaction:', error);
+    //   toast.error("Transaction Failed", {
+    //     description: error instanceof Error ? error.message : "An unknown error occurred",
+    //   });
+    // }
+    //};
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-4">
@@ -250,7 +519,9 @@ export default function TokenWrapper() {
                     <SelectItem key={token.value} value={token.value}>
                       <div className="flex items-center">
                         {token.logo}
-                        <span>{token.symbol} ({token.balance} {token.symbol})</span>
+                        <span>
+                          {isWrap ? token.symbol : `P${token.symbol}`} ({token.balance} {isWrap ? token.symbol : `P${token.symbol}`})
+                        </span>
                       </div>
                     </SelectItem>
                   ))}
@@ -268,7 +539,9 @@ export default function TokenWrapper() {
                     <SelectItem key={token.value} value={token.value}>
                       <div className="flex items-center">
                         {token.logo}
-                        <span>{isWrap ? token.symbol : `${token.symbol} (${token.balance} ${token.symbol})`}</span>
+                        <span>
+                          {token.symbol} ({parseFloat(token.balance).toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 4})} {token.symbol})
+                        </span>
                       </div>
                     </SelectItem>
                   ))}
