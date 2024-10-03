@@ -26,6 +26,7 @@ import {useCurrentAccount } from '@mysten/dapp-kit';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@repo/ui/components/ui/dialog"
 import { Input } from "@repo/ui/components/ui/input"
 import { Label } from "@repo/ui/components/ui/label"
+import { AssetsMetadata } from "../jotai/swap/swap"
 
 const tokenData = [
   { name: "Obelisk (OBL)", balance: 0.5, value: 15000, icon: "https://hop.ag/tokens/SUI.svg" },
@@ -52,7 +53,7 @@ export default function Assets() {
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const account = useCurrentAccount();
-  const [assetMetadata, setAssetMetadata] = useState<any[]>([]);
+  const [assetMetadata, setAssetMetadata] = useAtom(AssetsMetadata)
   const [totalValue, setTotalValue] = useState("N/A");
   const [actionDialogOpen, setActionDialogOpen] = useState(false)
   const [selectedAction, setSelectedAction] = useState<string | null>(null)

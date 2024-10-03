@@ -18,8 +18,9 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
         '1': { symbol: 'USDC', icon: 'https://hop.ag/tokens/SUI.svg' }
     };
 
-    const [fromToken, setFromToken] = useState(tokens[params.fromToken as keyof typeof tokens]);
-    const [toToken, setToToken] = useState(tokens[params.toToken as keyof typeof tokens]);
+    const [fromToken, setFromToken] = useState<any>(null);
+    const [toToken, setToToken] = useState<any>(null);
+    const [currentSelection, setCurrentSelection] = useState<'from' | 'to'>('from');
 
     const [isLoading, setIsLoading] = useState(false);
     const [dollarValue, setDollarValue] = useState<string | null>(null);
@@ -40,6 +41,12 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
             setToTokenLoading(false);
         }, 1500); // Adjust this timeout as needed
     }, [params.fromToken, params.toToken]);
+
+    useEffect(() => {
+        // 假设 tokens 是一个包含所有可用 token 的对象或数组
+        const initialToToken = tokens[params.toToken as keyof typeof tokens] || null;
+        setToToken(initialToToken);
+    }, [params.toToken]);
 
     const handleSwap = () => {
         console.log("Swap button clicked"); // 调试日志
@@ -93,6 +100,15 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
 
     const [slippage, setSlippage] = useState("1.00");
 
+    const handleSelectToken = (token: any) => {
+        if (currentSelection === 'from') {
+            setFromToken(token);
+        } else {
+            setToToken(token);
+        }
+        setTokenSelectionOpen(false);
+    };
+
     return (
         <main>
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-4">
@@ -118,13 +134,22 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
                                     className="text-4xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
                                     onChange={handleInputChangePay}
                                 />
-                                <Button variant="outline" className="ml-2 rounded-full" onClick={() => setTokenSelectionOpen(true)}>
-                                    {fromTokenLoading ? (
-                                        <Skeleton className="w-5 h-5 rounded-full mr-2" />
+                                <Button 
+                                    variant="outline" 
+                                    className="ml-2 rounded-full" 
+                                    onClick={() => {
+                                        setCurrentSelection('from');
+                                        setTokenSelectionOpen(true);
+                                    }}
+                                >
+                                    {fromToken ? (
+                                        <>
+                                            <img src={fromToken.icon} alt={fromToken.symbol} className="w-5 h-5 mr-2" />
+                                            {fromToken.symbol}
+                                        </>
                                     ) : (
-                                        <img src={fromToken.icon} alt={fromToken.symbol} className="w-5 h-5 mr-2" />
+                                        'Select Token'
                                     )}
-                                    {fromToken.symbol}
                                     <ChevronDown className="ml-2 h-4 w-4" />
                                 </Button>
                             </div>
@@ -148,13 +173,22 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
                                     className="text-4xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
                                     readOnly
                                 />
-                                <Button variant="outline" className="ml-2 rounded-full" onClick={() => setTokenSelectionOpen(true)}>
-                                    {toTokenLoading ? (
-                                        <Skeleton className="w-5 h-5 rounded-full mr-2" />
+                                <Button 
+                                    variant="outline" 
+                                    className="ml-2 rounded-full" 
+                                    onClick={() => {
+                                        setCurrentSelection('to');
+                                        setTokenSelectionOpen(true);
+                                    }}
+                                >
+                                    {toToken ? (
+                                        <>
+                                            <img src={toToken.icon} alt={toToken.symbol} className="w-5 h-5 mr-2" />
+                                            {toToken.symbol}
+                                        </>
                                     ) : (
-                                        <img src={toToken.icon} alt={toToken.symbol} className="w-5 h-5 mr-2" />
+                                        'Select Token'
                                     )}
-                                    {toToken.symbol}
                                     <ChevronDown className="ml-2 h-4 w-4" />
                                 </Button>
                             </div>
@@ -173,10 +207,8 @@ export default function Page({ params }: { params: { fromToken: string, toToken:
             <TokenSelectionModal 
                 isOpen={isTokenSelectionOpen} 
                 onClose={() => setTokenSelectionOpen(false)} 
-                onSelectToken={(token) => {
-                    // Handle token selection
-                    setTokenSelectionOpen(false);
-                }}
+                onSelectToken={handleSelectToken}
+                selectionType={currentSelection}
             />
         </main>
     )

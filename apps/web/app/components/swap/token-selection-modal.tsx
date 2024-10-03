@@ -5,44 +5,30 @@ import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area"
 import { useAtom } from 'jotai'
-import { TokenSelectionOpen } from '../../jotai/swap/swap'
+import { AssetsMetadata, TokenSelectionOpen } from '../../jotai/swap/swap'
 import debounce from 'lodash.debounce'
 
-const tokens = [
-  { symbol: 'SUI', name: 'Sui', address: '0x2::sui::SUI', verified: true },
-  { symbol: 'USDC', name: 'USD Coin', address: '0x5d4b...COIN', verified: true },
-  { symbol: 'AUSD', name: 'AUSD', address: '0x2053...AUSD', verified: true },
-  { symbol: 'BLUB', name: 'BLUB', address: '0xfa7a...BLUB', verified: true },
-  { symbol: 'FUD', name: 'FUD', address: '0x76cb...FUD', verified: true },
-  { symbol: 'HUSKI', name: 'Huski Token', address: '0xda16...OKEN', verified: true },
-]
-
-const quickSelectTokens = ['SUI', 'USDC', 'LIQ', 'MEOW', 'PUGWIF', 'SCUBA']
+const quickSelectTokens = ['SUI']
 
 
-function TokenSelectionModalOpen() {
+function TokenSelectionModalOpen({ onSelectToken, onClose, selectionType }: { onSelectToken: (token: any) => void, onClose: () => void, selectionType: 'from' | 'to' }) {
     const [_, setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [filteredTokens, setFilteredTokens] = useState(tokens);
+    const [assetMetadata] = useAtom(AssetsMetadata);
+    const [filteredAssets, setFilteredAssets] = useState(assetMetadata);
     
-    const getTokenImage = (symbol: string) => {
-      return `https://hop.ag/tokens/SUI.svg`
-    }
-
     const filterTokens = useCallback((term: string) => {
       setIsLoading(true);
-      // Simulate API call delay
-      setTimeout(() => {
-        const filtered = tokens.filter(token => 
-          token.symbol.toLowerCase().includes(term.toLowerCase()) ||
-          token.name.toLowerCase().includes(term.toLowerCase()) ||
-          token.address.toLowerCase().includes(term.toLowerCase())
-        );
-        setFilteredTokens(filtered);
-        setIsLoading(false);
-      }, 500);
-    }, []);
+      const lowercasedTerm = term.toLowerCase();
+      const filtered = assetMetadata.filter(asset => 
+        asset.metadata[0].toLowerCase().includes(lowercasedTerm) || // name
+        asset.metadata[1].toLowerCase().includes(lowercasedTerm) || // symbol
+        asset.metadata[2].toLowerCase().includes(lowercasedTerm)    // type
+      );
+      setFilteredAssets(filtered);
+      setIsLoading(false);
+    }, [assetMetadata]);
 
     const debouncedFilterTokens = useMemo(
       () => debounce(filterTokens, 300)
@@ -55,14 +41,25 @@ function TokenSelectionModalOpen() {
       };
     }, [searchTerm, debouncedFilterTokens]);
 
+    const handleSelectToken = (asset: any) => {
+        onSelectToken({
+            symbol: asset.metadata[1],
+            name: asset.metadata[0],
+            icon: asset.metadata[4] || "/default-icon.png",
+            balance: (Number(asset.balance[0]) / Math.pow(10, asset.metadata[3])).toLocaleString(),
+            id: asset.id
+        });
+        onClose();
+    };
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl w-full max-w-md">
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Select a Token</h2>
+              <h2 className="text-2xl font-bold">Select a {selectionType === 'from' ? 'Pay' : 'Receive'} Token</h2>
               <Button variant="ghost" size="icon" className="rounded-full">
-                <X onClick={() => setTokenSelectionOpen(false)} className="h-6 w-6" />
+                <X onClick={onClose} className="h-6 w-6" />
               </Button>
             </div>
             
@@ -80,7 +77,7 @@ function TokenSelectionModalOpen() {
             <div className="flex flex-wrap gap-2 mb-4">
               {quickSelectTokens.map((token) => (
                 <Button key={token} variant="outline" className="rounded-full">
-                 <img src={getTokenImage(token)} alt={token} className="w-6 h-6 mr-2" />
+                 <img src={`https://hop.ag/tokens/${token}.svg`} alt={token} className="w-6 h-6 mr-2" />
                   {token}
                 </Button>
               ))}
@@ -92,29 +89,35 @@ function TokenSelectionModalOpen() {
                   <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
                 </div>
               ) : (
-                filteredTokens.map((token) => (
-                  <div key={token.symbol} className="flex items-center justify-between py-3 border-b last:border-b-0">
+                filteredAssets.map((asset) => (
+                  <div 
+                    key={asset.id} 
+                    className="flex items-center justify-between py-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSelectToken(asset)}
+                  >
                     <div className="flex items-center">
-                      <img src={getTokenImage(token.symbol)} alt={token.symbol} className="w-10 h-10 mr-3" />
+                      <img src={asset.metadata[4] || "/default-icon.png"} alt={asset.metadata[0]} className="w-10 h-10 mr-3" />
                       <div>
                         <div className="flex items-center">
-                          <span className="font-bold mr-1">{token.symbol}</span>
-                          {token.verified && <Check className="w-4 h-4 text-green-500" />}
+                          <span className="font-bold mr-1">{asset.metadata[1]}</span>
+                          <Check className="w-4 h-4 text-green-500" />
                         </div>
-                        <span className="text-sm text-gray-500">{token.name}</span>
+                        <span className="text-sm text-gray-500">{asset.metadata[0]}</span>
                       </div>
                     </div>
                     <div className="flex items-center">
-                      <span className="text-sm text-gray-500 mr-2">--</span>
+                      <span className="text-sm text-gray-500 mr-2">
+                        {(Number(asset.balance[0]) / Math.pow(10, asset.metadata[3])).toLocaleString()}
+                      </span>
                       <Button variant="ghost" size="sm" className="text-gray-500">
-                        {token.address.slice(0, 6)}...{token.address.slice(-4)}
+                        {asset.metadata[2].slice(0, 6)}...{asset.metadata[2].slice(-4)}
                         <ExternalLink className="w-4 h-4 ml-1" />
                       </Button>
                     </div>
                   </div>
                 ))
               )}
-              {!isLoading && filteredTokens.length === 0 && (
+              {!isLoading && filteredAssets.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   No tokens found matching your search.
                 </div>
@@ -134,17 +137,13 @@ interface TokenSelectionModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSelectToken: (token: any) => void;
+    selectionType: 'from' | 'to';
 }
 
-const TokenSelectionModal: React.FC<TokenSelectionModalProps> = ({ isOpen, onClose, onSelectToken }) => {
-    return (
-        <div style={{ display: isOpen ? 'block' : 'none' }}>
-            {/* Modal Content */}
-            <TokenSelectionModalOpen/>
-            <button onClick={onClose}>Close</button>
-            {/* Token selection logic */}
-        </div>
-    );
+const TokenSelectionModal: React.FC<TokenSelectionModalProps> = ({ isOpen, onClose, onSelectToken, selectionType }) => {
+    if (!isOpen) return null;
+
+    return <TokenSelectionModalOpen onSelectToken={onSelectToken} onClose={onClose} selectionType={selectionType} />;
 };
 
 export default TokenSelectionModal;
