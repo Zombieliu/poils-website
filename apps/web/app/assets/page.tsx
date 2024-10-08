@@ -82,55 +82,60 @@ export default function Assets() {
       return;
     }
 
-    const obelisk = await init_obelisk_client()
-    let tx = new Transaction();
-    const assets = tx.object(ASSETS_ID)
-    const owner = tx.pure.address(account?.address)
-    let params: TransactionArgument[] = [
-      assets,
-      owner
-    ];
-    let query_own_assets_id_list = await obelisk.query.assets_system.owned_assets(tx, params) as DevInspectResults
-    let owner_asset_id_list = obelisk.view(query_own_assets_id_list)[0];  
-    console.log("owner_asset_id_list", owner_asset_id_list)
-
-    // Fetch metadata and balance for each asset
-    const assetPromises = owner_asset_id_list.map(async (assetId: number) => {
-      // Create a new Transaction for metadata query
-      let tx2 = new Transaction();
-      let assets = tx2.object(ASSETS_ID)
-      let asset_id = tx2.pure.u32(assetId)
-      
-      // Fetch metadata
-      let metadataParams: TransactionArgument[] = [
+    try {
+      const obelisk = await init_obelisk_client()
+      let tx = new Transaction();
+      const assets = tx.object(ASSETS_ID)
+      const owner = tx.pure.address(account?.address)
+      let params: TransactionArgument[] = [
         assets,
-        asset_id
+        owner
       ];
-      let asset_metadata = await obelisk.query.assets_system.metadata_of(tx2, metadataParams) as DevInspectResults;
-      
-      // Create a new Transaction for balance query
-      let tx3 = new Transaction();
-      let assets3 = tx3.object(ASSETS_ID)
-      let asset_id3 = tx3.pure.u32(assetId)
-      
-      // Fetch balance
-      let balanceParams: TransactionArgument[] = [
-        assets3,
-        asset_id3,
-        tx3.pure.address(account?.address)
-      ];
-      let balance_query = await obelisk.query.assets_system.balance_of(tx3, balanceParams) as DevInspectResults;
-      
-      return {
-        id: assetId,
-        metadata: obelisk.view(asset_metadata),
-        balance: obelisk.view(balance_query)
-      };
-    });
-    const assetResults = await Promise.all(assetPromises);
+      let query_own_assets_id_list = await obelisk.query.assets_system.owned_assets(tx, params) as DevInspectResults
+      let owner_asset_id_list = obelisk.view(query_own_assets_id_list)[0];  
+      console.log("owner_asset_id_list", owner_asset_id_list)
 
-    setAssetMetadata(assetResults);
-    console.log("Asset data:", assetResults);
+      // Fetch metadata and balance for each asset
+      const assetPromises = owner_asset_id_list.map(async (assetId: number) => {
+        // Create a new Transaction for metadata query
+        let tx2 = new Transaction();
+        let assets = tx2.object(ASSETS_ID)
+        let asset_id = tx2.pure.u32(assetId)
+        
+        // Fetch metadata
+        let metadataParams: TransactionArgument[] = [
+          assets,
+          asset_id
+        ];
+        let asset_metadata = await obelisk.query.assets_system.metadata_of(tx2, metadataParams) as DevInspectResults;
+        
+        // Create a new Transaction for balance query
+        let tx3 = new Transaction();
+        let assets3 = tx3.object(ASSETS_ID)
+        let asset_id3 = tx3.pure.u32(assetId)
+        
+        // Fetch balance
+        let balanceParams: TransactionArgument[] = [
+          assets3,
+          asset_id3,
+          tx3.pure.address(account?.address)
+        ];
+        let balance_query = await obelisk.query.assets_system.balance_of(tx3, balanceParams) as DevInspectResults;
+        
+        return {
+          id: assetId,
+          metadata: obelisk.view(asset_metadata),
+          balance: obelisk.view(balance_query)
+        };
+      });
+      const assetResults = await Promise.all(assetPromises);
+
+      setAssetMetadata(assetResults);
+      console.log("Asset data:", assetResults);
+    } catch (error) {
+      console.error("Error querying assets:", error);
+      toast.error("Failed to fetch assets. Please try again.");
+    }
   }
 
   useEffect(() => {
@@ -139,7 +144,11 @@ export default function Assets() {
       return;
     }
 
-    query_assets()
+    if (account?.address) {
+      query_assets()
+    } else {
+      console.log("Waiting for account address...")
+    }
   }, [currentWallet, router, account])
 
   const handleActionClick = (action: string, assetId: number) => {

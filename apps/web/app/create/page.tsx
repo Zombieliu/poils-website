@@ -5,7 +5,7 @@ import Create from "../components/create/create";
 
 export default function Page() {
   return (
-    <main>
+    <main className="bg-pink-50">
       <Create/>
     </main>
   )
