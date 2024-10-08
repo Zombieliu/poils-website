@@ -7,9 +7,9 @@ import { NETWORK, PACKAGE_ID } from "../../chain/config";
 const init_obelisk_client = async () => {
     const metadata = await loadMetadata(NETWORK, PACKAGE_ID);
     const obelisk = new Obelisk({
-        fullnodeUrls:[
-            "https://rpc-testnet.suiscan.xyz:443"
-        ],
+        // fullnodeUrls:[
+        //     "https://rpc-testnet.suiscan.xyz:443"
+        // ],
         networkType: NETWORK,
         packageId: PACKAGE_ID,
         metadata: metadata,
