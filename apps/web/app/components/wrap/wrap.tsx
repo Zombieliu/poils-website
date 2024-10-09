@@ -331,7 +331,7 @@ export default function TokenWrapper() {
       const decimals = selectedAssetMetadata.decimals;
       
       let tx = new Transaction();
-      tx.setGasBudget(1000000000);
+      // tx.setGasBudget(1000000000);
       let wrapper = tx.object(WRAPPER_ID);
       let assets = tx.object(ASSETS_ID);
       let beneficiary = tx.pure.address(account?.address);
