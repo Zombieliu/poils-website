@@ -60,13 +60,16 @@ export default function Header() {
         <Link href="/wrap" className="text-sm font-medium hover:text-gray-600">
           Warp
         </Link>
-        <Link href="/bridge" className="text-sm font-medium hover:text-gray-600">
+        {/* <Link href="/bridge" className="text-sm font-medium hover:text-gray-600">
           Bridge
-        </Link>
+        </Link> */}
         {/* <button className="text-sm font-medium hover:text-gray-600 flex items-center">
-          <span>More</span>
+          <span>Pool</span>
           <ChevronDown className="ml-1 h-4 w-4" />
         </button> */}
+        <Link href="/pool/liquidity" className="text-sm font-medium hover:text-gray-600">
+          Pool
+        </Link>
       </nav>
       <ConnectButton />
       {/* <ConnectModal

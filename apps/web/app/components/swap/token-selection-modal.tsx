@@ -47,7 +47,8 @@ function TokenSelectionModalOpen({ onSelectToken, onClose, selectionType }: { on
             name: asset.metadata[0],
             icon: asset.metadata[4] || "/default-icon.png",
             balance: (Number(asset.balance[0]) / Math.pow(10, asset.metadata[3])).toLocaleString(),
-            id: asset.id
+            id: asset.id,
+            decimals: asset.metadata[3]
         });
         onClose();
     };

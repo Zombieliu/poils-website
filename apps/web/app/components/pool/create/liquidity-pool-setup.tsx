@@ -1,138 +1,251 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, Info, AlertTriangle } from 'lucide-react'
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
 import { Label } from "@repo/ui/components/ui/label"
 import { useAtom } from 'jotai'
-import { PoolSetupOpen } from '../../../jotai/pool/pool'
+import { PoolSetupOpen, SelectedPoolTokens } from '../../../jotai/pool/pool'
+import { init_obelisk_client } from '../../../jotai/obelisk'
+import { Transaction, TransactionArgument } from '@0xobelisk/sui-client'
+import { ASSETS_ID, DEX_ID } from '../../../chain/config'
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { toast } from 'sonner'
 
-export default function LiquidityPoolSetup() {
+interface LiquidityPoolSetupProps {
+  selectedTokens: { base: any; quote: any } | null;
+  onClose: () => void;
+}
+
+export default function LiquidityPoolSetup({ selectedTokens, onClose }: LiquidityPoolSetupProps) {
   const [feeTier, setFeeTier] = useState('1%')
   const [initialPrice, setInitialPrice] = useState('1')
   const [liquidityRange, setLiquidityRange] = useState('Full')
-  const [suiAmount, setSuiAmount] = useState('')
-  const [usdcAmount, setUsdcAmount] = useState('0.1')
-  const [_, setPoolSetupOpen] = useAtom(PoolSetupOpen)
+  const [baseAmount, setBaseAmount] = useState('')
+  const [quoteAmount, setQuoteAmount] = useState('')
+  const [baseMinAmount, setBaseMinAmount] = useState('')
+  const [quoteMinAmount, setQuoteMinAmount] = useState('')
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const [digest, setDigest] = useState("");
+
+  if (!selectedTokens) return null;
+
+  const { base, quote } = selectedTokens;
+
+  const create_pool = async () => {
+    const obelisk = await init_obelisk_client()
+    let tx = new Transaction();
+    let params: TransactionArgument[] = [
+        tx.object(ASSETS_ID),
+        tx.object(DEX_ID),
+        tx.pure.u32(base.id),
+        tx.pure.u32(quote.id),
+    ];
+    await obelisk.tx.dex_system.create_pool(tx, params, undefined, true);
+    await signAndExecuteTransaction(
+      {
+        transaction: tx.serialize(),
+        chain: `sui:testnet`,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction', result);
+          toast("Translation Successful", {
+            description: new Date().toUTCString(),
+            action: {
+              label: "Check in Explorer",
+              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+            },
+          });
+          setDigest(result.digest);
+        },
+        onError: error => {
+          console.log('executed transaction', error);
+        },
+      },
+    );
+  }
+
+  const add_liquidity = async () => {
+    const obelisk = await init_obelisk_client()
+    let tx = new Transaction();
+    
+    // Convert input values to the appropriate decimal places
+    const baseDesired = BigInt(Math.floor(parseFloat(baseAmount) * Math.pow(10, base.metadata[3])));
+    const quoteDesired = BigInt(Math.floor(parseFloat(quoteAmount) * Math.pow(10, quote.metadata[3])));
+    const baseMin = BigInt(Math.floor(parseFloat(baseMinAmount) * Math.pow(10, base.metadata[3])));
+    const quoteMin = BigInt(Math.floor(parseFloat(quoteMinAmount) * Math.pow(10, quote.metadata[3])));
+
+    let params: TransactionArgument[] = [
+        tx.object(ASSETS_ID),
+        tx.object(DEX_ID),
+        tx.pure.u32(base.id),
+        tx.pure.u32(quote.id),
+        tx.pure.u64(baseDesired),
+        tx.pure.u64(quoteDesired),
+        tx.pure.u64(baseMin),
+        tx.pure.u64(quoteMin),
+    ];
+    await obelisk.tx.dex_system.add_liquidity(tx, params, undefined, true);
+    await signAndExecuteTransaction(
+      {
+        transaction: tx.serialize(),
+        chain: `sui:testnet`,
+      },
+      {
+        onSuccess: (result) => {
+          console.log('executed transaction', result);
+          toast("Translation Successful", {
+            description: new Date().toUTCString(),
+            action: {
+              label: "Check in Explorer",
+              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
+            },
+          });
+          setDigest(result.digest);
+        },
+        onError: error => {
+          console.log('executed transaction', error);
+        },
+      },
+    );
+  }
+
+  const handleCreatePool = async () => {
+    console.log('Create pool')
+    // let _a = await create_pool()
+    // let _b = await add_liquidity()
+    console.log(selectedTokens);
+  }
 
   return (
-    <div className="min-h-screen bg-white p-6 max-w-md mx-auto">
-      <div className="mb-6 flex items-center">
-        <button onClick={() => setPoolSetupOpen(false)} className="flex items-center text-primary">
+    <div className="bg-white p-6 max-w-md mx-auto">
+      <div className="mb-6 flex items-center justify-between">
+        <button onClick={onClose} className="flex items-center text-primary">
           <ArrowLeft className="mr-2" />
           <span>Back to select tokens</span>
         </button>
+        <h1 className="text-xl font-bold">Set initial deposit</h1>
       </div>
       
-      <h1 className="text-2xl font-bold mb-6">Step 2: Set initial deposit</h1>
-      
-      <div className="mb-6">
-        <Label className="flex items-center mb-2">
-          Fee tier <Info className="ml-2 w-4 h-4" />
-        </Label>
-        <div className="flex space-x-2">
-          {['1%', '0.3%', '0.05%', '0.01%'].map((fee) => (
+      <div className="space-y-6">
+        <div>
+          <Label className="flex items-center mb-2">
+            Fee tier <Info className="ml-2 w-4 h-4" />
+          </Label>
+          <div className="grid grid-cols-4 gap-2">
+            {['1%', '0.3%', '0.05%', '0.01%'].map((fee) => (
+              <Button
+                key={fee}
+                variant={feeTier === fee ? "secondary" : "outline"}
+                onClick={() => setFeeTier(fee)}
+                className="w-full"
+              >
+                {fee}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+          <Label className="flex items-center mb-2">
+            Initial price <Info className="ml-2 w-4 h-4" />
+          </Label>
+          <div className="flex items-center">
+            <Input
+              type="text"
+              value={initialPrice}
+              onChange={(e) => setInitialPrice(e.target.value)}
+              className="flex-1"
+            />
+            <span className="ml-2 text-sm text-gray-600">USDC per SUI</span>
+          </div>
+        </div>
+        
+        <div>
+          <Label className="flex items-center mb-2">
+            Liquidity range <Info className="ml-2 w-4 h-4" />
+          </Label>
+          <div className="flex space-x-2">
             <Button
-              key={fee}
-              variant={feeTier === fee ? "secondary" : "outline"}
-              onClick={() => setFeeTier(fee)}
+              variant={liquidityRange === 'Full' ? "secondary" : "outline"}
+              onClick={() => setLiquidityRange('Full')}
               className="flex-1"
             >
-              {fee}
+              Full
             </Button>
-          ))}
-        </div>
-      </div>
-      
-      <div className="mb-6">
-        <Label className="flex items-center mb-2">
-          Initial price <Info className="ml-2 w-4 h-4" />
-        </Label>
-        <div className="flex items-center">
-          <Input
-            type="text"
-            value={initialPrice}
-            onChange={(e) => setInitialPrice(e.target.value)}
-            className="flex-1 bg-white"
-          />
-          <span className="ml-2">USDC per SUI</span>
-        </div>
-      </div>
-      
-      <div className="mb-6">
-        <Label className="flex items-center mb-2">
-          Liquidity range <Info className="ml-2 w-4 h-4" />
-        </Label>
-        <div className="flex space-x-2">
-          <Button
-            variant={liquidityRange === 'Full' ? "secondary" : "outline"}
-            onClick={() => setLiquidityRange('Full')}
-            className="flex-1"
-          >
-            Full
-          </Button>
-          <Button
-            variant={liquidityRange === 'Custom' ? "secondary" : "outline"}
-            onClick={() => setLiquidityRange('Custom')}
-            className="flex-1"
-          >
-            Custom
-          </Button>
-        </div>
-      </div>
-      
-      <div className="mb-6">
-        <Label className="mb-2">Amount to deposit</Label>
-        <div className="text-right mb-2 text-gray-600">50% $SUI : 50% $USDC</div>
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <div className="flex items-center mb-4">
-            <img src="https://hop.ag/tokens/SUI.svg" alt="Poils logo" className="w-8 h-8 rounded-full mr-2" />
-            <div className="flex-1">
-              <div>Poils</div>
-              <div className="text-sm text-gray-600">Balance: 10.64</div>
-            </div>
-            <Input
-              type="text"
-              value={suiAmount}
-              onChange={(e) => setSuiAmount(e.target.value)}
-              className="w-1/3 bg-white"
-            />
-          </div>
-          <div className="flex items-center">
-            <img src="https://hop.ag/tokens/SUI.svg" alt="Obelisk logo" className="w-8 h-8 rounded-full mr-2" />
-            <div className="flex-1">
-              <div>Obelisk</div>
-              <div className="text-sm text-gray-600">Balance: 0.013213</div>
-            </div>
-            <Input
-              type="text"
-              value={usdcAmount}
-              onChange={(e) => setUsdcAmount(e.target.value)}
-              className="w-1/3 bg-white"
-            />
+            <Button
+              variant={liquidityRange === 'Custom' ? "secondary" : "outline"}
+              onClick={() => setLiquidityRange('Custom')}
+              className="flex-1"
+            >
+              Custom
+            </Button>
           </div>
         </div>
-        <div className="flex justify-between mt-2">
-          <span>Total</span>
-          <span>$0</span>
+        
+        <div>
+          <Label className="mb-2">Amount to deposit</Label>
+          <div className="text-right mb-2 text-sm text-gray-600">50% {base.metadata[0]} : 50% {quote.metadata[0]}</div>
+          <div className="bg-gray-100 p-4 rounded-lg space-y-4">
+            {[base, quote].map((token, index) => (
+              <div key={index} className="flex items-center">
+                <img src={token.metadata[4] || "/default-icon.png"} alt={`${token.metadata[0]} logo`} className="w-8 h-8 rounded-full mr-2" />
+                <div className="flex-1">
+                  <div>{token.metadata[0]}</div>
+                  <div className="text-sm text-gray-600">Balance: {(Number(token.balance[0]) / Math.pow(10, token.metadata[3])).toLocaleString()}</div>
+                </div>
+                <Input
+                  type="text"
+                  value={index === 0 ? baseAmount : quoteAmount}
+                  onChange={(e) => index === 0 ? setBaseAmount(e.target.value) : setQuoteAmount(e.target.value)}
+                  className="w-1/3"
+                />
+              </div>
+            ))}
+          </div>
+          
+          {/* New section for minimum deposit amounts */}
+          <div className="mt-4">
+            <Label className="mb-2">Minimum deposit amounts</Label>
+            <div className="bg-gray-100 p-4 rounded-lg space-y-4">
+              {[base, quote].map((token, index) => (
+                <div key={index} className="flex items-center">
+                  <img src={token.metadata[4] || "/default-icon.png"} alt={`${token.metadata[0]} logo`} className="w-8 h-8 rounded-full mr-2" />
+                  <div className="flex-1">
+                    <div>{token.metadata[0]} min</div>
+                  </div>
+                  <Input
+                    type="text"
+                    value={index === 0 ? baseMinAmount : quoteMinAmount}
+                    onChange={(e) => index === 0 ? setBaseMinAmount(e.target.value) : setQuoteMinAmount(e.target.value)}
+                    className="w-1/3"
+                    placeholder="Min amount"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-between mt-2 text-sm">
+            <span>Total</span>
+            <span>$0</span>
+          </div>
         </div>
       </div>
       
-      <div className="bg-yellow-50 p-4 rounded-lg mb-6">
+      <div className="bg-yellow-50 p-4 rounded-lg my-6">
         <div className="flex items-start">
-          <AlertTriangle className="w-6 h-6 mr-2 text-yellow-500" />
-          <div>
-            <div className="font-bold">Important Notice:</div>
-            <div className="text-sm text-gray-700">
-              A minimum liquidity deposit of $100 is required to create a new pool. This ensures that token pools are established by project builders and core community members with a genuine commitment to the project.
-            </div>
+          <AlertTriangle className="w-5 h-5 mr-2 text-yellow-500 flex-shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <span className="font-semibold">Important Notice:</span> A minimum liquidity deposit of $100 is required to create a new pool. This ensures that token pools are established by project builders and core community members with a genuine commitment to the project.
           </div>
         </div>
       </div>
       
-      <Button className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white">
-        Create Poils pool and deposit
+      <Button onClick={handleCreatePool} className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white">
+        Create {base.metadata[0]}/{quote.metadata[0]} pool and deposit
       </Button>
     </div>
   )

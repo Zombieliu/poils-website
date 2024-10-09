@@ -4,6 +4,11 @@ import { Search, ChevronDown, RefreshCw, Grid, List, Info } from 'lucide-react'
 import Link from 'next/link'
 import React, { useState, useEffect, useCallback } from 'react'
 import { Skeleton } from "@repo/ui/components/ui/skeleton"
+import TokenCreate from './create/token-create'
+import LiquidityPoolSetup from './create/liquidity-pool-setup'
+import { Dialog, DialogContent } from "@repo/ui/components/ui/dialog"
+import { SelectedPoolTokens } from '../../jotai/pool/pool'
+import { useAtom } from 'jotai'
 
 export default function LiquidityPools() {
   const [isLoading, setIsLoading] = useState(true)
@@ -13,6 +18,9 @@ export default function LiquidityPools() {
   const [category, setCategory] = useState('All')
   const [sortBy, setSortBy] = useState('Default')
   const [viewMode, setViewMode] = useState('card') // 'card' or 'table'
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'select' | 'setup'>('select');
+  const [selectedTokens, setSelectedTokens] = useAtom(SelectedPoolTokens);
 
   const categories = [
     'All',
@@ -76,6 +84,25 @@ export default function LiquidityPools() {
   const handleViewModeChange = () => {
     setViewMode(prevMode => prevMode === 'card' ? 'table' : 'card')
   }
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+    setCurrentStep('select');
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCurrentStep('select');
+  };
+
+  const handleSelectTokens = (base: any, quote: any) => {
+    setSelectedTokens({ base, quote });
+    setCurrentStep('setup');
+  };
+
+  const handleBackToSelect = () => {
+    setCurrentStep('select');
+  };
 
   const renderCardView = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -177,7 +204,10 @@ export default function LiquidityPools() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold text-gray-800">Earn Fees and Rewards by Providing Liquidity</h1>
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded">
+          <button 
+            className="bg-indigo-600 text-white px-4 py-2 rounded"
+            onClick={handleOpenModal}
+          >
             + Create a Pool
           </button>
         </div>
@@ -247,6 +277,21 @@ export default function LiquidityPools() {
           </>
         )}
       </div>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          {currentStep === 'select' ? (
+            <TokenCreate
+              onClose={handleCloseModal}
+              onSelectTokens={handleSelectTokens}
+            />
+          ) : (
+            <LiquidityPoolSetup
+              selectedTokens={selectedTokens}
+              onClose={handleBackToSelect}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
