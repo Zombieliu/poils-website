@@ -140,7 +140,7 @@ export default function Page({ params }: { params: { fromToken: string; toToken:
   const getAmountOut = async (amount: string) => {
     const poils = initPoilsClient();
     const path = [1, 0];
-    let amount_out = (await poils.getAmountOut(path, parseFloat(amount) * 1e9))[0];
+    let amount_out = await poils.getAmountOut(path, parseFloat(amount) * 1e9);
     return amount_out;
   };
 
