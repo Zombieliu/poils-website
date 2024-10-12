@@ -1,13 +1,11 @@
-"use client";
+'use client';
 
-import Staking from "../components/staking/staking";
-
+import Staking from '@/app/components/staking/staking';
 
 export default function Page() {
-
-    return (
-        <main>
-           <Staking/>
-        </main>
-    )
+  return (
+    <main>
+      <Staking />
+    </main>
+  );
 }

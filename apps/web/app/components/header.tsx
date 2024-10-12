@@ -1,20 +1,15 @@
-import Link from "next/link"
-import React, { useState } from "react"
-import {
-  ConnectButton,
-  ConnectModal,
-  useCurrentAccount,
-} from "@mysten/dapp-kit";
-import { Sheet } from "@repo/ui/components/ui/sheet"
-import Assets from "../assets/page"
-import { ChevronDown } from "lucide-react";
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { ConnectButton, ConnectModal, useCurrentAccount } from '@mysten/dapp-kit';
+import { Sheet } from '@repo/ui/components/ui/sheet';
+import Assets from '@/app/assets/page';
+import { ChevronDown } from 'lucide-react';
 
 export default function Header() {
   const currentAccount = useCurrentAccount();
-	const [open, setOpen] = useState(false);
-	const [assetsSheetOpen, setAssetsSheetOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [assetsSheetOpen, setAssetsSheetOpen] = useState(false);
 
-  
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
       <div className="flex items-center space-x-4">
@@ -39,7 +34,7 @@ export default function Header() {
         <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">v0.1</span>
       </div>
       <nav className="hidden md:flex items-center space-x-4">
-      <Link href="/" className="text-sm font-medium hover:text-gray-600">
+        <Link href="/" className="text-sm font-medium hover:text-gray-600">
           Swap
         </Link>
         <Link href="/pool" className="text-sm font-medium hover:text-gray-600">
@@ -83,5 +78,5 @@ export default function Header() {
         <Assets />
       </Sheet>
     </header>
-  )
+  );
 }

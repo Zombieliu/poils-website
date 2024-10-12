@@ -2,9 +2,9 @@
 // Feel free to delete it
 
 export interface ReqSend {
-    content: string
+  content: string;
 }
 
 export interface ResSend {
-    time: Date
+  time: Date;
 }
