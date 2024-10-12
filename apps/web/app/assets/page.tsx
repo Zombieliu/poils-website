@@ -26,7 +26,6 @@ import {
 } from '@repo/ui/components/ui/table';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { DevInspectResults, Transaction, TransactionArgument } from '@0xobelisk/sui-client';
-import { initObeliskClient, obeliskClient } from '@/app/jotai/obelisk';
 import { initPoilsClient, poilsClient } from '@/app/jotai/poils';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
@@ -103,7 +102,6 @@ export default function Assets() {
     }
 
     try {
-      const obelisk = initObeliskClient();
       const poils = initPoilsClient();
       // let owner_asset_id_list = obelisk.view(query_own_assets_id_list)[0];
       let owner_asset_id_list = (await poils.ownedAssets(account?.address))[0];
@@ -111,38 +109,17 @@ export default function Assets() {
 
       // Fetch metadata and balance for each asset
       const assetPromises = owner_asset_id_list.map(async (assetId: number) => {
-        // Create a new Transaction for metadata query
-        let tx2 = new Transaction();
-        let assets = tx2.object(ASSETS_ID);
-        let asset_id = tx2.pure.u32(assetId);
-
         // Fetch metadata
-        let metadataParams: TransactionArgument[] = [assets, asset_id];
-        let asset_metadata = (await obelisk.query.assets_system.metadata_of(
-          tx2,
-          metadataParams
-        )) as DevInspectResults;
-
-        // Create a new Transaction for balance query
-        let tx3 = new Transaction();
-        let assets3 = tx3.object(ASSETS_ID);
-        let asset_id3 = tx3.pure.u32(assetId);
-
+        let metadata = await poils.metadataOf(assetId);
         // Fetch balance
-        let balanceParams: TransactionArgument[] = [
-          assets3,
-          asset_id3,
-          tx3.pure.address(account?.address)
-        ];
-        let balance_query = (await obelisk.query.assets_system.balance_of(
-          tx3,
-          balanceParams
-        )) as DevInspectResults;
+        let balance = await poils.balanceOf(assetId, account?.address);
 
+        console.log('metadata', metadata);
+        console.log('balance', balance);
         return {
           id: assetId,
-          metadata: obelisk.view(asset_metadata),
-          balance: obelisk.view(balance_query)
+          metadata,
+          balance
         };
       });
       const assetResults = await Promise.all(assetPromises);
