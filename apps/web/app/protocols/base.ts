@@ -1,15 +1,7 @@
-export interface BaseRequest {
-    
-}
+export interface BaseRequest {}
 
-export interface BaseResponse {
-    
-}
+export interface BaseResponse {}
 
-export interface BaseConf {
-    
-}
+export interface BaseConf {}
 
-export interface BaseMessage {
-
-}
+export interface BaseMessage {}

@@ -1,15 +1,11 @@
-"use client";
+'use client';
 
-import LiquidityPools from "../components/pool/liquidity-pools";
-
-
-
+import LiquidityPools from '@/app/components/pool/liquidity-pools';
 
 export default function Page() {
-
-    return (
-        <main>
-           <LiquidityPools/>
-        </main>
-    )
+  return (
+    <main>
+      <LiquidityPools />
+    </main>
+  );
 }

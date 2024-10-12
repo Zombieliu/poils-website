@@ -1,7 +1,7 @@
-"use client";
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { ArrowRightLeft, Wallet } from "lucide-react"
+'use client';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { ArrowRightLeft, Wallet } from 'lucide-react';
 
 export default function Staking() {
   return (
@@ -16,11 +16,15 @@ export default function Staking() {
           </div>
         </div>
       </div>
-      
-      <h2 className="text-2xl font-bold text-center mb-8">赚取更多收益通过 <span className="text-teal-500">&lt; xPoils &gt;</span></h2>
-      
-      <p className="text-center text-gray-400 mb-8">通过质押Poils，您有机会赚取协议产生的费用，任何Poils持有人都可以分享Poils的收入。</p>
-      
+
+      <h2 className="text-2xl font-bold text-center mb-8">
+        赚取更多收益通过 <span className="text-teal-500">&lt; xPoils &gt;</span>
+      </h2>
+
+      <p className="text-center text-gray-400 mb-8">
+        通过质押Poils，您有机会赚取协议产生的费用，任何Poils持有人都可以分享Poils的收入。
+      </p>
+
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg">
           <p className="text-gray-400 mb-2">质押年化率</p>
@@ -35,11 +39,15 @@ export default function Staking() {
           <p className="text-gray-400">- REF</p>
         </div>
       </div>
-      
+
       <div className="bg-white p-4 rounded-lg mb-8">
         <div className="flex justify-between mb-4">
-          <Button variant="ghost" className="text-teal-500">质押</Button>
-          <Button variant="ghost" className="text-gray-400">取消质押</Button>
+          <Button variant="ghost" className="text-teal-500">
+            质押
+          </Button>
+          <Button variant="ghost" className="text-gray-400">
+            取消质押
+          </Button>
         </div>
         <div className="flex items-center justify-between mb-4">
           <ArrowRightLeft className="w-6 h-6 text-teal-500" />
@@ -51,7 +59,7 @@ export default function Staking() {
           <Wallet className="w-4 h-4 mr-2" /> 连接钱包
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg">
           <p className="text-gray-400 mb-2">质押人数</p>
@@ -62,7 +70,7 @@ export default function Staking() {
           <p className="text-2xl font-bold">2,968,234.25 Poils</p>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg">
           <p className="text-gray-400 mb-2">质押的Poils总数量</p>
@@ -73,7 +81,7 @@ export default function Staking() {
           <p className="text-xl font-bold">10,016,949.23 xPoils</p>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white p-4 rounded-lg">
           <p className="text-gray-400 mb-2">累计 Poils 回购</p>
@@ -85,5 +93,5 @@ export default function Staking() {
         </div>
       </div>
     </div>
-  )
+  );
 }
