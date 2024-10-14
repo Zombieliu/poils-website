@@ -336,7 +336,7 @@ export default function Assets() {
   }
 
   return (
-    <SheetContent className="w-[400px] sm:w-[540px] bg-pink-50">
+    <SheetContent className="w-[400px] sm:w-[540px] ">
       <SheetHeader>
         <SheetTitle>Crypto Portfolio</SheetTitle>
         <SheetDescription>Your current poils'token holdings</SheetDescription>

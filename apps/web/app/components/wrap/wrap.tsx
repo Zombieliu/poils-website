@@ -480,7 +480,7 @@ export default function TokenWrapper() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#F7F8FA] p-4">
       <Card className="w-[400px] border-gray-200 shadow-sm">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Poils Token Exchange</CardTitle>

@@ -29,23 +29,8 @@ const queryClient = new QueryClient();
 export default function RootLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-[#F7F8FA]`}>
         <Provider>
-          {/* <PrivyProvider
-          appId="cm0o2vtqd04lf9gashae43gzb"
-          config={{
-            // Customize Privy's appearance in your app
-            appearance: {
-              theme: 'light',
-              accentColor: '#676FFF',
-              logo: 'https://your-logo-url',
-            },
-            // Create embedded wallets for users who don't have a wallet
-            embeddedWallets: {
-              createOnLogin: 'users-without-wallets',
-            },
-          }}
-        > */}
           <QueryClientProvider client={queryClient}>
             <SuiClientProvider networks={networkConfig} defaultNetwork={NETWORK}>
               <WalletProvider>
@@ -54,13 +39,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
                   <div>
                     <Header />
                     <AppWrapper>{children}</AppWrapper>
-                    {/* {children} */}
                   </div>
                 </EnokiFlowProvider>
               </WalletProvider>
             </SuiClientProvider>
           </QueryClientProvider>
-          {/* </PrivyProvider> */}
         </Provider>
       </body>
     </html>
