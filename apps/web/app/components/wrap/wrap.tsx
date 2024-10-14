@@ -320,7 +320,7 @@ export default function TokenWrapper() {
       const decimals = selectedAssetMetadata.decimals;
 
       let tx = new Transaction();
-      tx.setGasBudget(100000000);
+      // tx.setGasBudget(10000000000);
 
       console.log('selectedSourceToken.value', selectedSourceToken.value);
 
