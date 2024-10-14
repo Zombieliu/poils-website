@@ -64,13 +64,10 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
     (term: string) => {
       setIsLoading(true);
       const lowercasedTerm = term.toLowerCase();
-      const filtered = assetMetadata.filter(
-        (asset) =>
-          asset.metadata[0].toLowerCase().includes(lowercasedTerm) || // name
-          asset.metadata[1].toLowerCase().includes(lowercasedTerm) || // symbol
-          asset.metadata[2].toLowerCase().includes(lowercasedTerm) || // type
-          asset.metadata[3].toLowerCase().includes(lowercasedTerm) || // decimals
-          asset.metadata[4].toLowerCase().includes(lowercasedTerm) // icon
+      const filtered = assetMetadata.filter((asset) =>
+        ['name', 'symbol', 'type', 'decimals', 'icon'].some((field, index) =>
+          asset.metadata[index].toLowerCase().includes(lowercasedTerm)
+        )
       );
       setFilteredAssets(filtered);
       setIsLoading(false);

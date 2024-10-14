@@ -15,7 +15,6 @@ export default function AppWrapper({ children }: AppWrapperProps) {
 
   useEffect(() => {
     if (connectionStatus === 'connected' && currentWallet) {
-      // 当连接成功时，将钱包信息保存到 localStorage
       localStorage.setItem(
         'sui_wallet_info',
         JSON.stringify({
@@ -27,13 +26,13 @@ export default function AppWrapper({ children }: AppWrapperProps) {
   }, [connectionStatus, currentWallet]);
 
   useEffect(() => {
-    // 组件加载时，尝试从 localStorage 恢复钱包信息
     const savedWalletInfo = localStorage.getItem('sui_wallet_info');
     if (savedWalletInfo && connectionStatus === 'disconnected') {
-      // 这里可以添加自动重连的逻辑，或者显示一个提示让用户手动重连
-      console.log('Found saved wallet info:', JSON.parse(savedWalletInfo));
+      const parsedInfo = JSON.parse(savedWalletInfo);
+      console.log('Found saved wallet info:', parsedInfo);
+      // 这里可以添加自动重连逻辑或显示重连提示
     }
-  }, []);
+  }, [connectionStatus]);
 
   if (!currentWallet) {
     return (

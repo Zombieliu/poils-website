@@ -75,29 +75,26 @@ export default function TokenWrapper() {
 
   useEffect(() => {
     const getWrapCoins = async () => {
-      const poils = initPoilsClient();
-      let wrap_token_list = (await poils.wrappedAssets())[0];
-      console.log('=================');
-      console.log(wrap_token_list);
-      const assetPromises = wrap_token_list.map(async (assetId: number) => {
-        let metadata = await poils.metadataOf(assetId);
-        let balance = await poils.balanceOf(assetId, account?.address);
-
-        console.log('assetId huifeng', assetId);
-        console.log('balance huifeng', balance);
-
-        return {
-          id: assetId,
-          metadata,
-          balance
-        };
-      });
-      const assetResults = await Promise.all(assetPromises);
-      setAssetMetadata(assetResults);
-      console.log('assetResults', assetResults);
+      try {
+        const poils = initPoilsClient();
+        const wrap_token_list = (await poils.wrappedAssets())[0];
+        const assetResults = await Promise.all(
+          wrap_token_list.map(async (assetId: number) => {
+            const [metadata, balance] = await Promise.all([
+              poils.metadataOf(assetId),
+              poils.balanceOf(assetId, account?.address)
+            ]);
+            return { id: assetId, metadata, balance };
+          })
+        );
+        setAssetMetadata(assetResults);
+      } catch (error) {
+        console.error('Error fetching wrap coins:', error);
+        // 可以在这里添加错误处理逻辑,比如显示错误提示
+      }
     };
     getWrapCoins();
-  }, []);
+  }, [account?.address]);
 
   // Updated sourceTokens calculation
   const sourceTokens = useMemo(() => {

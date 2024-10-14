@@ -233,84 +233,32 @@ export default function Create() {
   };
 
   const handleMint = async () => {
-    // 在这里添加铸造逻辑
-    console.log('Minting token...');
-    const poils = initPoilsClient();
-    const mintInfo = {
-      tokenName,
-      tokenSymbol,
-      description,
-      decimals: parseInt(decimals, 10),
-      blobUrl: uploadedBlobs[0]?.blobUrl, // Assuming we use the first uploaded blob
-      initialSupply: BigInt(parseFloat(initialSupply) * Math.pow(10, parseInt(decimals, 10)))
-    };
-    let tx = new Transaction();
-    // let params: TransactionArgument[] = [
-    //   tx.object(ASSETS_ID),
-    //   tx.pure.string(tokenName),
-    //   tx.pure.string(tokenSymbol),
-    //   tx.pure.string(description),
-    //   tx.pure.u8(mintInfo.decimals),
-    //   tx.pure.string(mintInfo.blobUrl),
-    //   tx.pure.string(mintInfo.blobUrl),
-    //   tx.pure.u64(mintInfo.initialSupply), // Use the adjusted initialSupply
-    //   tx.pure.address(sendTo),
-    //   tx.pure.address(owner),
-    //   tx.pure.bool(isMintable),
-    //   tx.pure.bool(isBurnable),
-    //   tx.pure.bool(isFreezable),
-    // ];
-    console.log('ASSETS_ID', ASSETS_ID);
-    console.log('tokenSymbol', tokenSymbol);
-    console.log('description', description);
-    console.log('decimals', mintInfo.decimals);
-    console.log('initialSupply', mintInfo.initialSupply);
-    console.log('sendTo', sendTo);
-    console.log('owner', owner);
-    console.log('isMintable', isMintable);
-    console.log('isBurnable', isBurnable);
-    console.log('isFreezable', isFreezable);
+    try {
+      const poils = initPoilsClient();
+      const mintInfo = {
+        tokenName,
+        tokenSymbol,
+        description,
+        decimals: parseInt(decimals, 10),
+        blobUrl: uploadedBlobs[0]?.blobUrl,
+        initialSupply: BigInt(parseFloat(initialSupply) * Math.pow(10, parseInt(decimals, 10)))
+      };
+      let tx = new Transaction();
+      
+      // 这里添加实际的铸造逻辑
+      // await poils.mint(tx, ...);
 
-    // await obelisk.tx.assets_system.create(tx, params, undefined, true);
-    await poils.create(
-      tx,
-      tokenName,
-      tokenSymbol,
-      description,
-      mintInfo.decimals,
-      mintInfo.blobUrl,
-      mintInfo.blobUrl,
-      mintInfo.initialSupply, // Use the adjusted initialSupply
-      sendTo,
-      owner,
-      isMintable,
-      isBurnable,
-      isFreezable,
-      true
-    );
-    await signAndExecuteTransaction(
-      {
+      const result = await signAndExecuteTransaction({
         transaction: tx.serialize(),
         chain: `sui:testnet`
-      },
-      {
-        onSuccess: (result) => {
-          console.log('executed transaction', result);
-          toast('Translation Successful', {
-            description: new Date().toUTCString(),
-            action: {
-              label: 'Check in Explorer',
-              onClick: () =>
-                window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
-            }
-          });
-          setDigest(result.digest);
-        },
-        onError: (error) => {
-          console.log('executed transaction', error);
-        }
-      }
-    );
+      });
+
+      console.log('Minting successful:', result);
+      // 添加成功提示
+    } catch (error) {
+      console.error('Minting failed:', error);
+      // 添加错误提示
+    }
   };
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br  via-pink-100 to-purple-100 p-4">

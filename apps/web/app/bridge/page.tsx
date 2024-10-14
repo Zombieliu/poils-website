@@ -28,15 +28,19 @@ export default function Page() {
 
   useEffect(() => {
     const connectClient = async () => {
-      let resConnect = await client.connect();
-      if (!resConnect.isSucc) {
-        console.error('连接失败', resConnect.errMsg);
+      try {
+        const resConnect = await client.connect();
+        if (!resConnect.isSucc) {
+          throw new Error(resConnect.errMsg);
+        }
+        console.log('连接成功');
+      } catch (error) {
+        console.error('连接失败:', error);
+        // 可以在这里添加用户友好的错误提示
       }
-      console.log('连接成功');
-      console.log(resConnect.isSucc);
     };
     connectClient();
-  }, []);
+  }, [client]);
 
   // Send input message
   async function send() {
