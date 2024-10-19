@@ -19,6 +19,8 @@ import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-ki
 import { toast } from 'sonner';
 import { ASSETS_ID } from '@/app/chain/config';
 import { Switch } from '@repo/ui/components/ui/switch';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/ui/alert';
 
 interface BlobInfo {
   status: string;
@@ -53,9 +55,14 @@ export default function Create() {
   const [useSendToMyAddress, setUseSendToMyAddress] = useState(false);
   const [useOwnerMyAddress, setUseOwnerMyAddress] = useState(false);
   const account = useCurrentAccount();
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const basePubslisherUrl = 'https://publisher-devnet.walrus.space';
-  const Aggregator = 'https://aggregator-devnet.walrus.space';
+  // const basePubslisherUrl = 'https://publisher-devnet.walrus.space';
+  // const Aggregator = 'https://aggregator-devnet.walrus.space';
+
+  const basePubslisherUrl = 'https://publisher.walrus-testnet.walrus.space';
+  const Aggregator = 'https://aggregator.walrus-testnet.walrus.space';
 
   useEffect(() => {
     // Update form completion check
@@ -116,6 +123,8 @@ export default function Create() {
     const file = e.target.files?.[0];
     if (file) {
       const numEpochs = 1; // Adjust as needed
+      setIsUploading(true);
+      setUploadError(null);
 
       try {
         const response = await fetch(`${basePubslisherUrl}/v1/store?epochs=${numEpochs}`, {
@@ -127,15 +136,15 @@ export default function Create() {
           const storage_info = await response.json();
           const blobInfo = processUploadResponse(storage_info, file.type);
           setUploadedBlobs((prevBlobs) => [blobInfo, ...prevBlobs]);
-
-          // Close Token Image upload area
           closeTokenImageArea();
         } else {
           throw new Error('Something went wrong when storing the blob!');
         }
       } catch (error) {
         console.error('Upload error:', error);
-        // Handle error (e.g., show error message to user)
+        setUploadError('An error occurred while uploading. Please try again.');
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -232,7 +241,7 @@ export default function Create() {
     }
   };
 
-  const handleMint = async () => {
+  const handleCreate = async () => {
     try {
       const poils = initPoilsClient();
       const mintInfo = {
@@ -245,8 +254,34 @@ export default function Create() {
       };
       let tx = new Transaction();
       
-      // 这里添加实际的铸造逻辑
-      // await poils.mint(tx, ...);
+      console.log('ASSETS_ID', ASSETS_ID);
+    console.log('tokenSymbol', tokenSymbol);
+    console.log('description', description);
+    console.log('decimals', mintInfo.decimals);
+    console.log('initialSupply', mintInfo.initialSupply);
+    console.log('sendTo', sendTo);
+    console.log('owner', owner);
+    console.log('isMintable', isMintable);
+    console.log('isBurnable', isBurnable);
+    console.log('isFreezable', isFreezable);
+
+      // await obelisk.tx.assets_system.create(tx, params, undefined, true);
+      await poils.create(
+        tx,
+        tokenName,
+        tokenSymbol,
+        description,
+        mintInfo.decimals,
+        mintInfo.blobUrl,
+        mintInfo.blobUrl,
+        mintInfo.initialSupply, // Use the adjusted initialSupply
+        sendTo,
+        owner,
+        isMintable,
+        isBurnable,
+        isFreezable,
+        true
+      );
 
       const result = await signAndExecuteTransaction({
         transaction: tx.serialize(),
@@ -261,7 +296,7 @@ export default function Create() {
     }
   };
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br  via-pink-100 to-purple-100 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-white via-pink-100 to-purple-100 p-4">
       <h1 className="text-3xl font-bold text-center mb-12">Create a New Poils Token</h1>
 
       <div className="max-w-3xl mx-auto space-y-12">
@@ -386,38 +421,56 @@ export default function Create() {
                 className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg
-                    className="w-8 h-8 mb-4 text-gray-500"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 20 16"
-                  >
-                    <path
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C4.157 4.688 3 4.345 3 5.587V14a1 1 0 0 0 1 1h8Z"
-                    />
-                  </svg>
-                  <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    SVG, PNG, JPG or GIF (MAX. 800x400px)
-                  </p>
+                  {isUploading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-2"></div>
+                      <span>Uploading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-8 h-8 mb-4 text-gray-500"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 20 16"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C4.157 4.688 3 4.345 3 5.587V14a1 1 0 0 0 1 1h8Z"
+                        />
+                      </svg>
+                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        SVG, PNG, JPG or GIF (MAX. 10MB)
+                      </p>
+                    </>
+                  )}
                 </div>
                 <input
                   id="dropzone-file"
                   type="file"
                   className="hidden"
                   onChange={handleFileChange}
+                  disabled={isUploading}
                 />
               </label>
             </div>
           </div>
         </div>
+
+        {uploadError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{uploadError}</AlertDescription>
+          </Alert>
+        )}
 
         {/* Moved uploaded file information display section */}
         <section id="uploaded-blobs" className="space-y-4">
@@ -469,8 +522,8 @@ export default function Create() {
 
         {/* Conditional rendering for Mint button */}
         {isFormComplete ? (
-          <Button className="mt-8" onClick={handleMint}>
-            Mint
+          <Button className="mt-8" onClick={handleCreate}>
+            Create
           </Button>
         ) : (
           <p className="mt-8 text-gray-500">Please complete all fields to enable minting</p>
