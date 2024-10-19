@@ -64,6 +64,9 @@ export default function Create() {
   const basePubslisherUrl = 'https://publisher.walrus-testnet.walrus.space';
   const Aggregator = 'https://aggregator.walrus-testnet.walrus.space';
 
+  // const basePubslisherUrl = 'https://walrus-testnet-publisher.bartestnet.com';
+  // const Aggregator = 'https://walrus-testnet-publisher.bartestnet.com';
+
   useEffect(() => {
     // Update form completion check
     const isComplete =
@@ -134,6 +137,7 @@ export default function Create() {
 
         if (response.status === 200) {
           const storage_info = await response.json();
+          console.log("storage_info",storage_info);
           const blobInfo = processUploadResponse(storage_info, file.type);
           setUploadedBlobs((prevBlobs) => [blobInfo, ...prevBlobs]);
           closeTokenImageArea();
@@ -174,12 +178,13 @@ export default function Create() {
         blobId: storage_info.alreadyCertified.blobId,
         endEpoch: storage_info.alreadyCertified.endEpoch,
         suiRefType: 'Previous Sui Certified Event',
-        suiRef: storage_info.alreadyCertified.event.txDigest,
+        suiRef: storage_info.alreadyCertified.eventOrObject.Event.txDigest,
         suiBaseUrl: SUI_VIEW_TX_URL,
         blobUrl: `${Aggregator}/v1/${storage_info.alreadyCertified.blobId}`,
         isImage: media_type.startsWith('image'),
         media_type: media_type
       };
+      console.log(media_type.startsWith('image'));
     } else if ('newlyCreated' in storage_info) {
       info = {
         status: 'Newly created',
@@ -192,6 +197,7 @@ export default function Create() {
         isImage: media_type.startsWith('image'),
         media_type: media_type
       };
+      console.log(media_type.startsWith('image'));
     } else {
       throw Error('Unhandled successful response!');
     }
