@@ -8,11 +8,13 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { ChevronDown, ArrowUpDown, Loader2 } from 'lucide-react';
 import TokenSelectionModal from '@/app/components/swap/token-selection-modal';
-import { initObeliskClient } from '@/app/jotai/obelisk';
 import { Transaction, TransactionArgument, DevInspectResults } from '@0xobelisk/sui-client';
 import { ASSETS_ID, DEX_ID } from '@/app/chain/config';
 import debounce from 'lodash/debounce';
-import { initPoilsClient } from '@/app/jotai/poils';
+import { initMerakClient } from '@/app/jotai/merak';
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { toast } from 'sonner';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 
 // Add this utility function at the top of your file or in a separate utils file
 const formatBalance = (balance: string, decimals: number): string => {
@@ -22,6 +24,9 @@ const formatBalance = (balance: string, decimals: number): string => {
 };
 
 export default function SwapPage({ params }: { params: { fromToken: string; toToken: string } }) {
+  const account = useCurrentAccount();
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+
   const [isTokenSelectionOpen, setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
   const router = useRouter();
   const [assetMetadata] = useAtom(AssetsMetadata);
@@ -135,9 +140,9 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
   };
 
   const getAmountOut = async (amount: string) => {
-    const poils = initPoilsClient();
+    const merak = initMerakClient();
     const path = [1, 0];
-    let amount_out = await poils.getAmountOut(path, parseFloat(amount) * 1e9);
+    let amount_out = await merak.getAmountOut(path, parseFloat(amount) * 1e9);
     return amount_out;
   };
 
@@ -193,12 +198,21 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
     setTokenSelectionOpen(false);
   };
 
-  const handleSwapTokens = () => {
+  const handleSwapTokens = async () => {
     if (fromToken && toToken) {
       // Swap the tokens in the state
       setFromToken(toToken);
       setToToken(fromToken);
-
+      const merak = initMerakClient();
+      const tx = new Transaction();
+      const path = [1, 0];
+      let amount_out = await merak.swapTokensForExactTokens(
+        tx,
+        path,
+        parseFloat(payAmount) * 1e9,
+        0,
+        account?.address
+      );
       // Update the URL to reflect the swapped tokens
       router.push(`/swap/${toToken.symbol}/${fromToken.symbol}`);
     }
@@ -206,115 +220,115 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
 
   return (
     <div className="container mx-auto max-w-2xl p-4">
-        <main className="flex flex-col items-center justify-center min-h-screen  p-4">
-          <div className="w-full max-w-md">
-            <h1 className="text-3xl font-bold mb-4 text-center">Swap</h1>
-            {exchangeRate && (
-              <div className="text-sm text-center text-gray-500 mb-4">{exchangeRate}</div>
-            )}
-            {/* Removed the buttons for Swap, Limit, DCA, and Cross-Chain */}
-            <div className="space-y-4">
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <label className="block text-sm font-medium text-gray-500 mb-1">Sell</label>
-                <div className="flex items-center justify-between">
-                  <Input
-                    type="text"
-                    value={payAmount}
-                    placeholder="0.0"
-                    className="text-3xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
-                    onChange={handleInputChangePay}
-                  />
-                  <Button
-                    variant="outline"
-                    className="ml-2 rounded-full"
-                    onClick={() => {
-                      setCurrentSelection('from');
-                      setTokenSelectionOpen(true);
-                    }}
-                  >
-                    {fromToken ? (
-                      <>
-                        <img src={fromToken.icon} alt={fromToken.symbol} className="w-5 h-5 mr-2" />
-                        {fromToken.symbol}
-                      </>
-                    ) : (
-                      'Select Token'
-                    )}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex justify-between text-sm text-gray-500 mt-1">
-                  <span>{formatAmount(payAmount)}</span>
-                  <span>
-                    Balance: {fromTokenBalance} {fromToken?.symbol}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-center">
+      <main className="flex flex-col items-center justify-center min-h-screen  p-4">
+        <div className="w-full max-w-md">
+          <h1 className="text-3xl font-bold mb-4 text-center">Swap</h1>
+          {exchangeRate && (
+            <div className="text-sm text-center text-gray-500 mb-4">{exchangeRate}</div>
+          )}
+          {/* Removed the buttons for Swap, Limit, DCA, and Cross-Chain */}
+          <div className="space-y-4">
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-500 mb-1">Sell</label>
+              <div className="flex items-center justify-between">
+                <Input
+                  type="text"
+                  value={payAmount}
+                  placeholder="0.0"
+                  className="text-3xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
+                  onChange={handleInputChangePay}
+                />
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="rounded-full"
-                  onClick={handleSwapTokens}
+                  className="ml-2 rounded-full"
+                  onClick={() => {
+                    setCurrentSelection('from');
+                    setTokenSelectionOpen(true);
+                  }}
                 >
-                  <ArrowUpDown className="h-4 w-4" />
+                  {fromToken ? (
+                    <>
+                      <img src={fromToken.icon} alt={fromToken.symbol} className="w-5 h-5 mr-2" />
+                      {fromToken.symbol}
+                    </>
+                  ) : (
+                    'Select Token'
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </div>
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <label className="block text-sm font-medium text-gray-500 mb-1">Buy</label>
-                <div className="flex items-center justify-between">
-                  {isCalculating ? (
-                    <div className="flex items-center">
-                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                      <span className="text-3xl font-bold">Calculating...</span>
-                    </div>
-                  ) : (
-                    <Input
-                      type="text"
-                      value={receiveAmount}
-                      placeholder="0.0"
-                      className="text-3xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
-                      readOnly
-                    />
-                  )}
-                  <Button
-                    variant="outline"
-                    className="ml-2 rounded-full"
-                    onClick={() => {
-                      setCurrentSelection('to');
-                      setTokenSelectionOpen(true);
-                    }}
-                  >
-                    {toToken ? (
-                      <>
-                        <img src={toToken.icon} alt={toToken.symbol} className="w-5 h-5 mr-2" />
-                        {toToken.symbol}
-                      </>
-                    ) : (
-                      'Select Token'
-                    )}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex justify-between text-sm text-gray-500 mt-1">
-                  <span>{formatAmount(receiveAmount)}</span>
-                  <span>
-                    Balance: {toTokenBalance} {toToken?.symbol}
-                  </span>
-                </div>
+              <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <span>{formatAmount(payAmount)}</span>
+                <span>
+                  Balance: {fromTokenBalance} {fromToken?.symbol}
+                </span>
               </div>
             </div>
-            <Button className="w-full mt-4 bg-blue-500 text-white" disabled={!payAmount}>
-              {payAmount ? 'Swap' : 'Enter Amount'}
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full"
+                onClick={handleSwapTokens}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-500 mb-1">Buy</label>
+              <div className="flex items-center justify-between">
+                {isCalculating ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span className="text-3xl font-bold">Calculating...</span>
+                  </div>
+                ) : (
+                  <Input
+                    type="text"
+                    value={receiveAmount}
+                    placeholder="0.0"
+                    className="text-3xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 w-full"
+                    readOnly
+                  />
+                )}
+                <Button
+                  variant="outline"
+                  className="ml-2 rounded-full"
+                  onClick={() => {
+                    setCurrentSelection('to');
+                    setTokenSelectionOpen(true);
+                  }}
+                >
+                  {toToken ? (
+                    <>
+                      <img src={toToken.icon} alt={toToken.symbol} className="w-5 h-5 mr-2" />
+                      {toToken.symbol}
+                    </>
+                  ) : (
+                    'Select Token'
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <span>{formatAmount(receiveAmount)}</span>
+                <span>
+                  Balance: {toTokenBalance} {toToken?.symbol}
+                </span>
+              </div>
+            </div>
           </div>
-          <TokenSelectionModal
-            isOpen={isTokenSelectionOpen}
-            onClose={() => setTokenSelectionOpen(false)}
-            onSelectToken={handleSelectToken}
-            selectionType={currentSelection}
-          />
-        </main>
-      </div>
+          <Button className="w-full mt-4 bg-blue-500 text-white" disabled={!payAmount}>
+            {payAmount ? 'Swap' : 'Enter Amount'}
+          </Button>
+        </div>
+        <TokenSelectionModal
+          isOpen={isTokenSelectionOpen}
+          onClose={() => setTokenSelectionOpen(false)}
+          onSelectToken={handleSelectToken}
+          selectionType={currentSelection}
+        />
+      </main>
+    </div>
   );
 }

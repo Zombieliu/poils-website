@@ -70,18 +70,18 @@ export default function Page() {
 
   // Send input message
   async function test() {
-    // const obelisk = init_obelisk_client();
+    // const dubhe = init_dubhe_client();
     // let tx = new Transaction();
     // let params: TransactionArgument[] = [
     //   tx.object("0x2053056ef3a671cbbd3b4ada375aa0fb7543ba4dc7806799988bff7c3bdb28df"),
     //   tx.pure.u32(0),
     //   tx.pure.address("0x0ca15e20d5041a0d395edfb741f247242c2482b071956a18b8e6ca479e63fb36")
     // ];
-    // let query1 = (await obelisk.query.assets_system.balance_of(
+    // let query1 = (await dubhe.query.assets_system.balance_of(
     //   tx,
     //   params
     // )) as DevInspectResults;
-    // let formatData1 = obelisk.view(query1);
+    // let formatData1 = dubhe.view(query1);
     // console.log(formatData1);
   }
 
@@ -110,14 +110,14 @@ export default function Page() {
                         Ethereum (ETH)
                       </div>
                     </SelectItem>
-                    <SelectItem value="obl">
+                    <SelectItem value="dub">
                       <div className="flex items-center">
                         <img
                           src="https://hop.ag/tokens/SUI.svg"
-                          alt="OBL logo"
+                          alt="DUB logo"
                           className="w-5 h-5 mr-2"
                         />
-                        Obelisk (OBL)
+                        Dubhe (DUB)
                       </div>
                     </SelectItem>
                     <SelectItem value="pol">

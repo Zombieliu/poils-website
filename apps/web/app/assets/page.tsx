@@ -26,7 +26,7 @@ import {
 } from '@repo/ui/components/ui/table';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { DevInspectResults, Transaction, TransactionArgument } from '@0xobelisk/sui-client';
-import { initPoilsClient, poilsClient } from '@/app/jotai/poils';
+import { initMerakClient, merakClient } from '@/app/jotai/merak';
 import { useAtom } from 'jotai';
 import { toast } from 'sonner';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
@@ -48,8 +48,8 @@ import { Label } from '@repo/ui/components/ui/label';
 import { AssetsMetadata } from '@/app/jotai/swap/swap';
 
 const tokenData = [
-  { name: 'Obelisk (OBL)', balance: 0.5, value: 15000, icon: 'https://hop.ag/tokens/SUI.svg' },
-  { name: 'Poils (POL)', balance: 5, value: 10000, icon: 'https://hop.ag/tokens/SUI.svg' },
+  { name: 'Dubhe (DUB)', balance: 0.5, value: 15000, icon: 'https://hop.ag/tokens/SUI.svg' },
+  { name: 'Merak (POL)', balance: 5, value: 10000, icon: 'https://hop.ag/tokens/SUI.svg' },
   { name: 'Dubei (DUB)', balance: 1000, value: 500, icon: 'https://hop.ag/tokens/SUI.svg' },
   { name: 'Cyferio (CYF)', balance: 100, value: 2000, icon: 'https://hop.ag/tokens/SUI.svg' }
 ];
@@ -102,17 +102,16 @@ export default function Assets() {
     }
 
     try {
-      const poils = initPoilsClient();
-      // let owner_asset_id_list = obelisk.view(query_own_assets_id_list)[0];
-      let owner_asset_id_list = (await poils.ownedAssets(account?.address))[0];
+      const merak = initMerakClient();
+      let owner_asset_id_list = (await merak.ownedAssets(account?.address))[0];
       console.log('owner_asset_id_list', owner_asset_id_list);
 
       // Fetch metadata and balance for each asset
       const assetPromises = owner_asset_id_list.map(async (assetId: number) => {
         // Fetch metadata
-        let metadata = await poils.metadataOf(assetId);
+        let metadata = await merak.metadataOf(assetId);
         // Fetch balance
-        let balance = await poils.balanceOf(assetId, account?.address);
+        let balance = await merak.balanceOf(assetId, account?.address);
 
         console.log('metadata', metadata);
         console.log('balance', balance);
@@ -198,9 +197,9 @@ export default function Assets() {
   const handleTransfer = useCallback(
     async (assetId: number, to: string, amount: bigint) => {
       console.log('Transfer clicked');
-      const poils = initPoilsClient();
+      const merak = initMerakClient();
       let tx = new Transaction();
-      await poils.transfer(tx, assetId, to, amount, true);
+      await merak.transfer(tx, assetId, to, amount, true);
       await signAndExecuteTransaction(
         {
           transaction: tx.serialize(),
@@ -232,9 +231,9 @@ export default function Assets() {
   const handleTransferAll = useCallback(
     async (assetId: number, to: string) => {
       console.log('TransferAll clicked');
-      const poils = initPoilsClient();
+      const merak = initMerakClient();
       let tx = new Transaction();
-      await poils.transferAll(tx, assetId, to, true);
+      await merak.transferAll(tx, assetId, to, true);
       await signAndExecuteTransaction(
         {
           transaction: tx.serialize(),
@@ -266,9 +265,9 @@ export default function Assets() {
   const handleMint = useCallback(
     async (assetId: number, to: string, amount: bigint) => {
       console.log('Mint clicked');
-      const poils = initPoilsClient();
+      const merak = initMerakClient();
       let tx = new Transaction();
-      await poils.mint(tx, assetId, to, amount, true);
+      await merak.mint(tx, assetId, to, amount, true);
       await signAndExecuteTransaction(
         {
           transaction: tx.serialize(),
@@ -300,9 +299,9 @@ export default function Assets() {
   const handleBurn = useCallback(
     async (assetId: number, who: string, amount: bigint) => {
       console.log('Burn clicked');
-      const poils = initPoilsClient();
+      const merak = initMerakClient();
       let tx = new Transaction();
-      await poils.burn(tx, assetId, who, amount, true);
+      await merak.burn(tx, assetId, who, amount, true);
       await signAndExecuteTransaction(
         {
           transaction: tx.serialize(),
@@ -339,7 +338,7 @@ export default function Assets() {
     <SheetContent className="w-[400px] sm:w-[540px] ">
       <SheetHeader>
         <SheetTitle>Crypto Portfolio</SheetTitle>
-        <SheetDescription>Your current poils'token holdings</SheetDescription>
+        <SheetDescription>Your current merak'token holdings</SheetDescription>
       </SheetHeader>
       {isLoading || isRefreshing ? (
         <LoadingAnimation />

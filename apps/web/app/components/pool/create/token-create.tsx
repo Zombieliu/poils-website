@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 import { PoolSetupOpen, SelectedPoolTokens } from '@/app/jotai/pool/pool';
 import { X } from 'lucide-react';
 import { AssetsMetadata } from '@/app/jotai/swap/swap';
-import { initPoilsClient } from '@/app/jotai/poils';
+import { initMerakClient } from '@/app/jotai/merak';
 import { Transaction, TransactionArgument } from '@0xobelisk/sui-client';
 import { ASSETS_ID, DEX_ID } from '@/app/chain/config';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
@@ -39,11 +39,11 @@ export default function TokenCreate({ onClose, onSelectTokens }: TokenCreateProp
       const quoteAsset = assetMetadata.find((asset) => asset.id.toString() === quoteToken);
       if (baseAsset && quoteAsset) {
         console.log('1');
-        const poils = initPoilsClient();
+        const merak = initMerakClient();
         let tx = new Transaction();
         console.log(baseAsset.id);
         console.log(quoteAsset.id);
-        await poils.createPool(tx, baseAsset.id, quoteAsset.id, true);
+        await merak.createPool(tx, baseAsset.id, quoteAsset.id, true);
         await signAndExecuteTransaction(
           {
             transaction: tx.serialize(),

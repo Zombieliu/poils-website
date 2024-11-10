@@ -38,7 +38,7 @@ export default function AppWrapper({ children }: AppWrapperProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="p-8 bg-white/80 rounded-lg shadow-md backdrop-blur-sm">
-          <h1 className="mb-4 text-2xl font-bold text-center">Welcome to Poils</h1>
+          <h1 className="mb-4 text-2xl font-bold text-center">Welcome to Merak</h1>
           <p className="mb-6 text-center text-gray-600">
             Please connect your wallet to access all features.
           </p>

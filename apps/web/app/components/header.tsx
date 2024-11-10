@@ -29,7 +29,7 @@ export default function Header() {
             <path d="M12 19V5" />
             <path d="M5 12l7-7 7 7" />
           </svg>
-          <span className="font-bold text-lg text-blue-500">Poils</span>
+          <span className="font-bold text-lg text-blue-500">Merak</span>
         </div>
         <span className="text-xs bg-blue-100 text-blue-500 px-2 py-1 rounded-full">v0.1</span>
       </div>
@@ -52,7 +52,10 @@ export default function Header() {
         <Link href="/wrap" className="text-sm font-medium text-gray-600 hover:text-blue-500">
           Wrap
         </Link>
-        <Link href="/pool/liquidity" className="text-sm font-medium text-gray-600 hover:text-blue-500">
+        <Link
+          href="/pool/liquidity"
+          className="text-sm font-medium text-gray-600 hover:text-blue-500"
+        >
           Pool
         </Link>
       </nav>

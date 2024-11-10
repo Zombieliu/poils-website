@@ -4,7 +4,7 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import TokenSelectionModal from '@/app/components/swap/token-selection-modal';
-import { initPoilsClient } from '@/app/jotai/poils';
+import { initMerakClient } from '@/app/jotai/merak';
 import { Transaction, TransactionArgument } from '@0xobelisk/sui-client';
 import { toast } from 'sonner';
 import { ASSETS_ID, DEX_ID } from '@/app/chain/config';
@@ -49,7 +49,7 @@ export default function AddLiquidity() {
     }
 
     console.log('Add liquidity');
-    const poils = initPoilsClient();
+    const merak = initMerakClient();
     let tx = new Transaction();
 
     console.log(token1, token2);
@@ -59,7 +59,7 @@ export default function AddLiquidity() {
     const baseMin = BigInt(Math.floor(parseFloat(minAmount1) * Math.pow(10, token1.decimals)));
     const quoteMin = BigInt(Math.floor(parseFloat(minAmount2) * Math.pow(10, token2.decimals)));
 
-    await poils.addLiquidity(
+    await merak.addLiquidity(
       tx,
       token1.id,
       token2.id,

@@ -14,8 +14,8 @@ import {
 } from '@repo/ui/components/ui/select';
 import { Switch } from '@repo/ui/components/ui/switch';
 import { useAtom } from 'jotai';
-import { initObeliskClient } from '@/app/jotai/obelisk';
-import { initPoilsClient } from '@/app/jotai/poils';
+import { initDubheClient } from '@/app/jotai/dubhe';
+import { initMerakClient } from '@/app/jotai/merak';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import {
   CoinBalance,
@@ -44,16 +44,16 @@ export default function TokenWrapper() {
   useEffect(() => {
     const getCoins = async () => {
       try {
-        const obelisk = initObeliskClient();
+        const dubhe = initDubheClient();
 
-        const allBalances = await obelisk.suiInteractor.currentClient.getAllBalances({
+        const allBalances = await dubhe.suiInteractor.currentClient.getAllBalances({
           owner: account?.address
         });
         console.log('allBalances', allBalances);
 
         const updatedBalances = await Promise.all(
           allBalances.map(async (coinBalance) => {
-            const metadata = await obelisk.suiInteractor.currentClient.getCoinMetadata({
+            const metadata = await dubhe.suiInteractor.currentClient.getCoinMetadata({
               coinType: coinBalance.coinType
             });
             return { ...coinBalance, metadata };
@@ -76,13 +76,13 @@ export default function TokenWrapper() {
   useEffect(() => {
     const getWrapCoins = async () => {
       try {
-        const poils = initPoilsClient();
-        const wrap_token_list = (await poils.wrappedAssets())[0];
+        const merak = initMerakClient();
+        const wrap_token_list = (await merak.wrappedAssets())[0];
         const assetResults = await Promise.all(
           wrap_token_list.map(async (assetId: number) => {
             const [metadata, balance] = await Promise.all([
-              poils.metadataOf(assetId),
-              poils.balanceOf(assetId, account?.address)
+              merak.metadataOf(assetId),
+              merak.balanceOf(assetId, account?.address)
             ]);
             return { id: assetId, metadata, balance };
           })
@@ -100,7 +100,7 @@ export default function TokenWrapper() {
   const sourceTokens = useMemo(() => {
     const tokenMap = new Map();
 
-    const obelisk = initObeliskClient();
+    const dubhe = initDubheClient();
 
     balances.forEach(async (coinBalance: CoinBalance & { metadata: CoinMetadata }) => {
       const symbol =
@@ -252,8 +252,8 @@ export default function TokenWrapper() {
     e.preventDefault();
     console.log('wrap');
 
-    const obelisk = initObeliskClient();
-    const poils = initPoilsClient();
+    const dubhe = initDubheClient();
+    const merak = initMerakClient();
 
     // Ensure amount is a valid number
     const amountToWrap = parseFloat(amount);
@@ -311,7 +311,7 @@ export default function TokenWrapper() {
       // console.log("coin", coin);
 
       // Calculate the amount based on the decimals in metadata
-      const selectedAssetMetadata = await obelisk.suiInteractor.currentClient.getCoinMetadata({
+      const selectedAssetMetadata = await dubhe.suiInteractor.currentClient.getCoinMetadata({
         coinType: sourceToken
       });
       const decimals = selectedAssetMetadata.decimals;
@@ -324,7 +324,7 @@ export default function TokenWrapper() {
       const amountInSmallestUnit = Math.floor(amountToWrap * 10 ** decimals);
       console.log('amountInSmallestUnit', amountInSmallestUnit);
 
-      const selectCoins = await obelisk.selectCoinsWithAmount(
+      const selectCoins = await dubhe.selectCoinsWithAmount(
         amountInSmallestUnit,
         selectedSourceToken.value,
         // '0x2::sui::SUI',
@@ -334,7 +334,7 @@ export default function TokenWrapper() {
       console.log('amountToWrap', amountToWrap);
       const bidding_amount = tx.pure.u64(Math.floor(amountToWrap * 10 ** decimals));
       const [coin] = tx.splitCoins(tx.object(selectCoins[0]), [bidding_amount]);
-      await poils.wrap(tx, coin, account?.address, sourceToken, true);
+      await merak.wrap(tx, coin, account?.address, sourceToken, true);
 
       await signAndExecuteTransaction(
         {
@@ -372,8 +372,7 @@ export default function TokenWrapper() {
   const handleUnWrap = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    // const obelisk =  initObeliskClient();
-    const poils = initPoilsClient();
+    const merak = initMerakClient();
 
     const amountToUnwrap = parseFloat(amount);
     console.log('amountToUnwrap:', amountToUnwrap);
@@ -441,7 +440,7 @@ export default function TokenWrapper() {
         throw new Error('Invalid amount calculation');
       }
 
-      await poils.unwrap(tx, amountInSmallestUnit, account?.address, targetToken, true);
+      await merak.unwrap(tx, amountInSmallestUnit, account?.address, targetToken, true);
 
       await signAndExecuteTransaction(
         {
@@ -480,7 +479,7 @@ export default function TokenWrapper() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#F7F8FA] p-4">
       <Card className="w-[400px] border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">Poils Token Exchange</CardTitle>
+          <CardTitle className="text-xl font-semibold">Merak Token Exchange</CardTitle>
           <p className="text-sm text-gray-500">Wrap or unwrap tokens</p>
         </CardHeader>
         <CardContent>

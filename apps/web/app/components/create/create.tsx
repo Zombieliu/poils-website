@@ -13,7 +13,7 @@ import {
   TransactionArgument,
   isValidSuiAddress
 } from '@0xobelisk/sui-client';
-import { initPoilsClient, poilsClient } from '@/app/jotai/poils';
+import { initMerakClient, merakClient } from '@/app/jotai/merak';
 import { useAtom } from 'jotai';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { toast } from 'sonner';
@@ -137,7 +137,7 @@ export default function Create() {
 
         if (response.status === 200) {
           const storage_info = await response.json();
-          console.log("storage_info",storage_info);
+          console.log('storage_info', storage_info);
           const blobInfo = processUploadResponse(storage_info, file.type);
           setUploadedBlobs((prevBlobs) => [blobInfo, ...prevBlobs]);
           closeTokenImageArea();
@@ -249,7 +249,7 @@ export default function Create() {
 
   const handleCreate = async () => {
     try {
-      const poils = initPoilsClient();
+      const merak = initMerakClient();
       const mintInfo = {
         tokenName,
         tokenSymbol,
@@ -259,20 +259,19 @@ export default function Create() {
         initialSupply: BigInt(parseFloat(initialSupply) * Math.pow(10, parseInt(decimals, 10)))
       };
       let tx = new Transaction();
-      
-      console.log('ASSETS_ID', ASSETS_ID);
-    console.log('tokenSymbol', tokenSymbol);
-    console.log('description', description);
-    console.log('decimals', mintInfo.decimals);
-    console.log('initialSupply', mintInfo.initialSupply);
-    console.log('sendTo', sendTo);
-    console.log('owner', owner);
-    console.log('isMintable', isMintable);
-    console.log('isBurnable', isBurnable);
-    console.log('isFreezable', isFreezable);
 
-      // await obelisk.tx.assets_system.create(tx, params, undefined, true);
-      await poils.create(
+      console.log('ASSETS_ID', ASSETS_ID);
+      console.log('tokenSymbol', tokenSymbol);
+      console.log('description', description);
+      console.log('decimals', mintInfo.decimals);
+      console.log('initialSupply', mintInfo.initialSupply);
+      console.log('sendTo', sendTo);
+      console.log('owner', owner);
+      console.log('isMintable', isMintable);
+      console.log('isBurnable', isBurnable);
+      console.log('isFreezable', isFreezable);
+
+      await merak.create(
         tx,
         tokenName,
         tokenSymbol,
@@ -303,7 +302,7 @@ export default function Create() {
   };
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-white via-pink-100 to-purple-100 p-4">
-      <h1 className="text-3xl font-bold text-center mb-12">Create a New Poils Token</h1>
+      <h1 className="text-3xl font-bold text-center mb-12">Create a New Merak Token</h1>
 
       <div className="max-w-3xl mx-auto space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

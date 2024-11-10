@@ -6,7 +6,7 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { useAtom } from 'jotai';
-import { initPoilsClient } from '@/app/jotai/poils';
+import { initMerakClient } from '@/app/jotai/merak';
 import { Transaction, TransactionArgument } from '@0xobelisk/sui-client';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { toast } from 'sonner';
@@ -32,9 +32,9 @@ export default function LiquidityPoolSetup({ selectedTokens, onClose }: Liquidit
   const { base, quote } = selectedTokens;
 
   const create_pool = async () => {
-    const poils = initPoilsClient();
+    const merak = initMerakClient();
     let tx = new Transaction();
-    await poils.createPool(tx, base.id, quote.id, true);
+    await merak.createPool(tx, base.id, quote.id, true);
     await signAndExecuteTransaction(
       {
         transaction: tx.serialize(),
@@ -62,15 +62,23 @@ export default function LiquidityPoolSetup({ selectedTokens, onClose }: Liquidit
 
   const add_liquidity = async () => {
     try {
-      const poils = initPoilsClient();
+      const merak = initMerakClient();
       let tx = new Transaction();
 
-      const baseDesired = BigInt(Math.floor(parseFloat(baseAmount) * Math.pow(10, base.metadata[3])));
-      const quoteDesired = BigInt(Math.floor(parseFloat(quoteAmount) * Math.pow(10, quote.metadata[3])));
-      const baseMin = BigInt(Math.floor(parseFloat(baseMinAmount) * Math.pow(10, base.metadata[3])));
-      const quoteMin = BigInt(Math.floor(parseFloat(quoteMinAmount) * Math.pow(10, quote.metadata[3])));
+      const baseDesired = BigInt(
+        Math.floor(parseFloat(baseAmount) * Math.pow(10, base.metadata[3]))
+      );
+      const quoteDesired = BigInt(
+        Math.floor(parseFloat(quoteAmount) * Math.pow(10, quote.metadata[3]))
+      );
+      const baseMin = BigInt(
+        Math.floor(parseFloat(baseMinAmount) * Math.pow(10, base.metadata[3]))
+      );
+      const quoteMin = BigInt(
+        Math.floor(parseFloat(quoteMinAmount) * Math.pow(10, quote.metadata[3]))
+      );
 
-      await poils.addLiquidity(
+      await merak.addLiquidity(
         tx,
         base.id,
         quote.id,
@@ -91,7 +99,8 @@ export default function LiquidityPoolSetup({ selectedTokens, onClose }: Liquidit
         description: new Date().toUTCString(),
         action: {
           label: '在浏览器中查看',
-          onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
+          onClick: () =>
+            window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
         }
       });
       // Remove this line as it's causing an error
