@@ -8,7 +8,7 @@ import '@mysten/dapp-kit/dist/index.css';
 import { createNetworkConfig, SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@repo/ui/components/ui/sonner';
+import { Toaster } from 'sonner';
 import { NETWORK } from '@/app/chain/config';
 import { EnokiFlowProvider } from '@mysten/enoki/react';
 import Header from '@/app/components/header';

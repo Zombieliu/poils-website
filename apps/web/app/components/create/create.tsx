@@ -205,6 +205,12 @@ export default function Create() {
     return info;
   };
 
+  // 在组件顶部添加这个工具函数
+  const truncateMiddle = (str: string, startLength = 6, endLength = 4) => {
+    if (str.length <= startLength + endLength) return str;
+    return `${str.slice(0, startLength)}...${str.slice(-endLength)}`;
+  };
+
   const validateAddress = (address: string, setError: (error: string) => void) => {
     if (!isValidSuiAddress(address)) {
       setError('Invalid Sui address');
@@ -288,12 +294,35 @@ export default function Create() {
         true
       );
 
-      const result = await signAndExecuteTransaction({
-        transaction: tx.serialize(),
-        chain: `sui:testnet`
-      });
+      // const result = await signAndExecuteTransaction({
+      //   transaction: tx.serialize(),
+      //   chain: `sui:testnet`
+      // });
 
-      console.log('Minting successful:', result);
+      await signAndExecuteTransaction(
+        {
+          transaction: tx.serialize(),
+          chain: `sui:testnet`
+        },
+        {
+          onSuccess: (result) => {
+            console.log('executed transaction', result);
+            toast('Translation Successful', {
+              description: new Date().toUTCString(),
+              action: {
+                label: 'Check in Explorer',
+                onClick: () =>
+                  window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
+              }
+            });
+            setDigest(result.digest);
+          },
+          onError: (error) => {
+            console.log('executed transaction', error);
+          }
+        }
+      );
+      console.log('Already minted');
       // 添加成功提示
     } catch (error) {
       console.error('Minting failed:', error);
@@ -339,7 +368,13 @@ export default function Create() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="decimals">Decimals</Label>
-              <Input id="decimals" type="number" placeholder="Enter decimals" />
+              <Input
+                id="decimals"
+                type="number"
+                placeholder="Enter decimals"
+                value={decimals}
+                onChange={(e) => setDecimals(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="initialSupply">Initial Supply</Label>
@@ -478,45 +513,52 @@ export default function Create() {
         )}
 
         {/* Moved uploaded file information display section */}
-        <section id="uploaded-blobs" className="space-y-4">
+        <section id="uploaded-blobs" className="space-y-4 w-full max-w-3xl">
           {uploadedBlobs.map((info, index) => (
             <article key={index} className="border rounded-lg shadow-sm p-4 bg-gray-50">
-              <div className="flex">
+              <div className="flex items-center gap-6">
                 {info.isImage && (
-                  <object
-                    type={info.media_type}
-                    data={info.blobUrl}
-                    className="w-1/3 h-auto object-cover rounded-lg mr-4"
-                  ></object>
+                  <div className="w-32 h-32 flex-shrink-0">
+                    <object
+                      type={info.media_type}
+                      data={info.blobUrl}
+                      className="w-full h-full object-contain rounded-lg"
+                    ></object>
+                  </div>
                 )}
-                <dl className="blob-info flex-1">
-                  <div className="mb-2">
-                    <dt className="font-semibold">Status</dt>
+                <dl className="blob-info flex-1 space-y-2">
+                  <div>
+                    <dt className="font-semibold text-gray-700">Status</dt>
                     <dd>{info.status}</dd>
                   </div>
-                  <div className="mb-2">
-                    <dt className="font-semibold">Blob ID</dt>
-                    <dd className="truncate">
-                      <a href={info.blobUrl} className="text-blue-600 hover:underline">
+                  <div>
+                    <dt className="font-semibold text-gray-700">Blob ID</dt>
+                    <dd>
+                      <a
+                        href={info.blobUrl}
+                        className="text-blue-600 hover:underline"
+                        title={info.blobId}
+                      >
                         {info.blobId}
                       </a>
                     </dd>
                   </div>
-                  <div className="mb-2">
-                    <dt className="font-semibold">{info.suiRefType}</dt>
-                    <dd className="truncate">
+                  <div>
+                    <dt className="font-semibold text-gray-700">{info.suiRefType}</dt>
+                    <dd>
                       <a
                         href={`${info.suiBaseUrl}/${info.suiRef}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline"
+                        title={info.suiRef}
                       >
-                        {info.suiRef}
+                        {truncateMiddle(info.suiRef, 18, 16)}
                       </a>
                     </dd>
                   </div>
                   <div>
-                    <dt className="font-semibold">Stored until epoch</dt>
+                    <dt className="font-semibold text-gray-700">Stored until epoch</dt>
                     <dd>{info.endEpoch}</dd>
                   </div>
                 </dl>

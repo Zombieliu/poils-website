@@ -89,20 +89,28 @@ export default function LiquidityPoolSetup({ selectedTokens, onClose }: Liquidit
         true
       );
 
-      const result = await signAndExecuteTransaction({
-        transaction: tx.serialize(),
-        chain: `sui:testnet`
-      });
-
-      console.log('Transaction executed:', result);
-      toast.success('添加流动性成功', {
-        description: new Date().toUTCString(),
-        action: {
-          label: '在浏览器中查看',
-          onClick: () =>
-            window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
+      await signAndExecuteTransaction(
+        {
+          transaction: tx.serialize(),
+          chain: `sui:testnet`
+        },
+        {
+          onSuccess: (result) => {
+            console.log('executed transaction', result);
+            toast('Translation Successful', {
+              description: new Date().toUTCString(),
+              action: {
+                label: 'Check in Explorer',
+                onClick: () =>
+                  window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
+              }
+            });
+          },
+          onError: (error) => {
+            console.log('executed transaction', error);
+          }
         }
-      });
+      );
       // Remove this line as it's causing an error
       // setDigest(result.digest);
     } catch (error) {

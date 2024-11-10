@@ -65,20 +65,28 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
 
   console.log('assetMetadata', assetMetadata);
 
-  const filterTokens = useCallback(
-    (term: string) => {
-      setIsLoading(true);
-      const lowercasedTerm = term.toLowerCase();
-      const filtered = assetMetadata.filter((asset) =>
-        ['name', 'symbol', 'type', 'decimals', 'icon'].some((field, index) =>
-          asset.metadata[index].toLowerCase().includes(lowercasedTerm)
-        )
-      );
-      setFilteredAssets(filtered);
-      setIsLoading(false);
-    },
-    [assetMetadata]
-  );
+  // const filterTokens = useCallback(
+  //   (term: string) => {
+  //     setIsLoading(true);
+  //     const lowercasedTerm = term.toLowerCase();
+  //     const filtered = assetMetadata.filter((asset) =>
+  //       ['name', 'symbol', 'type', 'decimals', 'icon'].some((field, index) =>
+  //         asset.metadata[index].toLowerCase().includes(lowercasedTerm)
+  //       )
+  //     );
+  //     setFilteredAssets(filtered);
+  //     setIsLoading(false);
+  //   },
+  //   [assetMetadata]
+  // );
+
+  const handleQueryPath = async () => {
+    let merak = initMerakClient();
+    console.log('fromToken Id', fromToken?.id);
+    console.log('toToken Id', toToken?.id);
+    let pool_paths = await merak.querySwapPaths(fromToken?.id, toToken?.id);
+    console.log('pool_paths', pool_paths[0]);
+  };
 
   useEffect(() => {
     const fromTokenSymbol = params.fromToken.toUpperCase();
@@ -95,11 +103,12 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
       const decimals = parseInt(fromTokenInfo.metadata[3], 10);
       const formattedBalance = formatBalance(fromTokenInfo.balance || '0', decimals);
       setFromToken({
-        id: fromTokenInfo.metadata[2],
+        id: fromTokenInfo.id,
+        name: fromTokenInfo.metadata[0],
+        description: fromTokenInfo.metadata[2],
         symbol: fromTokenInfo.metadata[1],
         icon: fromTokenInfo.metadata[4],
         decimals: decimals,
-        name: fromTokenInfo.metadata[0],
         balance: formattedBalance
       });
       setFromTokenBalance(formattedBalance);
@@ -111,11 +120,12 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
       const decimals = parseInt(toTokenInfo.metadata[3], 10);
       const formattedBalance = formatBalance(toTokenInfo.balance || '0', decimals);
       setToToken({
-        id: toTokenInfo.metadata[2],
+        id: toTokenInfo.id,
+        name: toTokenInfo.metadata[0],
         symbol: toTokenInfo.metadata[1],
+        description: toTokenInfo.metadata[2],
         decimals: decimals,
         icon: toTokenInfo.metadata[4],
-        name: toTokenInfo.metadata[0],
         balance: formattedBalance
       });
       setToTokenBalance(formattedBalance);
@@ -141,8 +151,15 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
 
   const getAmountOut = async (amount: string) => {
     const merak = initMerakClient();
-    const path = [1, 0];
-    let amount_out = await merak.getAmountOut(path, parseFloat(amount) * 1e9);
+    const path = [fromToken?.id, toToken?.id];
+    console.log('amount', amount);
+    const asset_metadata = await merak.metadataOf(path[0]);
+    console.log('asset_metadata', asset_metadata);
+    const decimals = asset_metadata[3];
+    let amount_out = await merak.getAmountOut(path, parseFloat(amount) * 10 ** decimals);
+    console.log(parseFloat(amount) * 10 ** decimals);
+    console.log('amount_out', amount_out);
+
     return amount_out;
   };
 
@@ -195,6 +212,8 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
       // Update URL to reflect new toToken
       router.push(`/swap/${fromToken?.symbol}/${token.symbol}`);
     }
+    console.log('fromToken', fromToken);
+    console.log('toToken', toToken);
     setTokenSelectionOpen(false);
   };
 
@@ -320,6 +339,9 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
           </div>
           <Button className="w-full mt-4 bg-blue-500 text-white" disabled={!payAmount}>
             {payAmount ? 'Swap' : 'Enter Amount'}
+          </Button>
+          <Button className="w-full mt-4 bg-blue-500 text-white" onClick={() => handleQueryPath()}>
+            Test
           </Button>
         </div>
         <TokenSelectionModal

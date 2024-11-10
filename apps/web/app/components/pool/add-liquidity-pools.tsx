@@ -22,28 +22,39 @@ interface TokenData {
 export default function AddLiquidity() {
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [digest, setDigest] = useState('');
-  const [token1, setToken1] = useState<TokenData | null>(null);
-  const [token2, setToken2] = useState<TokenData | null>(null);
-  const [amount1, setAmount1] = useState('0.0');
-  const [amount2, setAmount2] = useState('0.0');
-  const [minAmount1, setMinAmount1] = useState('0.0');
-  const [minAmount2, setMinAmount2] = useState('0.0');
+  const [tokenPay, setTokenPay] = useState<TokenData | null>(null);
+  const [tokenReceive, setTokenReceive] = useState<TokenData | null>(null);
+  const [amountPay, setAmountPay] = useState('0.0');
+  const [amountReceive, setAmountReceive] = useState('0.0');
+  const [minAmountPay, setMinAmountPay] = useState('0.0');
+  const [minAmountReceive, setMinAmountReceive] = useState('0.0');
 
-  const [isToken1ModalOpen, setIsToken1ModalOpen] = useState(false);
-  const [isToken2ModalOpen, setIsToken2ModalOpen] = useState(false);
+  const [isTokenPayModalOpen, setIsTokenPayModalOpen] = useState(false);
+  const [isTokenReceiveModalOpen, setIsTokenReceiveModalOpen] = useState(false);
 
-  const handleSelectToken1 = (token: TokenData) => {
-    setToken1(token);
-    setIsToken1ModalOpen(false);
+  const [availableTokenReceives, setAvailableTokenReceives] = useState<number[]>([]);
+
+  const handleSelectTokenPay = async (token: TokenData) => {
+    setTokenPay(token);
+    setIsTokenPayModalOpen(false);
+
+    const merak = initMerakClient();
+    const connectedTokens = await merak.getConnectedTokens(token.id);
+    setAvailableTokenReceives(connectedTokens);
+    console.log('connectedTokens', connectedTokens);
+    if (tokenReceive && !connectedTokens.includes(tokenReceive.id)) {
+      setTokenReceive(null);
+    }
+    console.log('availableTokenReceives', availableTokenReceives);
   };
 
-  const handleSelectToken2 = (token: TokenData) => {
-    setToken2(token);
-    setIsToken2ModalOpen(false);
+  const handleSelectTokenReceive = (token: TokenData) => {
+    setTokenReceive(token);
+    setIsTokenReceiveModalOpen(false);
   };
 
   const handleAddLiquidity = async () => {
-    if (!token1 || !token2) {
+    if (!tokenPay || !tokenReceive) {
       toast.error('Please select both tokens');
       return;
     }
@@ -52,17 +63,21 @@ export default function AddLiquidity() {
     const merak = initMerakClient();
     let tx = new Transaction();
 
-    console.log(token1, token2);
+    console.log(tokenPay, tokenReceive);
 
-    const baseDesired = BigInt(Math.floor(parseFloat(amount1) * Math.pow(10, token1.decimals)));
-    const quoteDesired = BigInt(Math.floor(parseFloat(amount2) * Math.pow(10, token2.decimals)));
-    const baseMin = BigInt(Math.floor(parseFloat(minAmount1) * Math.pow(10, token1.decimals)));
-    const quoteMin = BigInt(Math.floor(parseFloat(minAmount2) * Math.pow(10, token2.decimals)));
+    const baseDesired = BigInt(Math.floor(parseFloat(amountPay) * Math.pow(10, tokenPay.decimals)));
+    const quoteDesired = BigInt(
+      Math.floor(parseFloat(amountReceive) * Math.pow(10, tokenReceive.decimals))
+    );
+    const baseMin = BigInt(Math.floor(parseFloat(minAmountPay) * Math.pow(10, tokenPay.decimals)));
+    const quoteMin = BigInt(
+      Math.floor(parseFloat(minAmountReceive) * Math.pow(10, tokenReceive.decimals))
+    );
 
     await merak.addLiquidity(
       tx,
-      token1.id,
-      token2.id,
+      tokenPay.id,
+      tokenReceive.id,
       baseDesired,
       quoteDesired,
       baseMin,
@@ -115,14 +130,14 @@ export default function AddLiquidity() {
           </p>
           <div className="flex space-x-2">
             <Button
-              onClick={() => setIsToken1ModalOpen(true)}
+              onClick={() => setIsTokenPayModalOpen(true)}
               className="w-full justify-between"
               variant="outline"
             >
-              {token1 ? (
+              {tokenPay ? (
                 <>
-                  <img src={token1.icon} alt={token1.symbol} className="w-6 h-6 mr-2" />
-                  {token1.symbol}
+                  <img src={tokenPay.icon} alt={tokenPay.symbol} className="w-6 h-6 mr-2" />
+                  {tokenPay.symbol}
                 </>
               ) : (
                 'Select token'
@@ -130,17 +145,20 @@ export default function AddLiquidity() {
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
             <Button
-              onClick={() => setIsToken2ModalOpen(true)}
+              onClick={() => setIsTokenReceiveModalOpen(true)}
               className="w-full justify-between"
               variant="outline"
+              disabled={!tokenPay}
             >
-              {token2 ? (
+              {tokenReceive ? (
                 <>
-                  <img src={token2.icon} alt={token2.symbol} className="w-6 h-6 mr-2" />
-                  {token2.symbol}
+                  <img src={tokenReceive.icon} alt={tokenReceive.symbol} className="w-6 h-6 mr-2" />
+                  {tokenReceive.symbol}
                 </>
-              ) : (
+              ) : tokenPay ? (
                 'Select token'
+              ) : (
+                'Select token pay first'
               )}
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
@@ -154,36 +172,38 @@ export default function AddLiquidity() {
           </p>
           <div className="space-y-4">
             <div>
-              <Label>{token1 ? token1.symbol : ''} Amount</Label>
+              <Label>{tokenPay ? tokenPay.symbol : ''} Amount</Label>
               <div className="flex items-center space-x-2">
                 <Input
                   type="text"
-                  value={amount1}
-                  onChange={(e) => setAmount1(e.target.value)}
+                  value={amountPay}
+                  onChange={(e) => setAmountPay(e.target.value)}
                   placeholder="0.0"
                 />
-                <span className="text-sm font-medium">{token1 ? token1.symbol : ''}</span>
+                <span className="text-sm font-medium">{tokenPay ? tokenPay.symbol : ''}</span>
               </div>
-              {token1 && (
+              {tokenPay && (
                 <p className="text-sm text-gray-500 mt-1">
-                  Balance: {token1.balance} {token1.symbol}
+                  Balance: {tokenPay.balance} {tokenPay.symbol}
                 </p>
               )}
             </div>
             <div>
-              <Label>{token2 ? token2.symbol : ''} Amount</Label>
+              <Label>{tokenReceive ? tokenReceive.symbol : ''} Amount</Label>
               <div className="flex items-center space-x-2">
                 <Input
                   type="text"
-                  value={amount2}
-                  onChange={(e) => setAmount2(e.target.value)}
+                  value={amountReceive}
+                  onChange={(e) => setAmountReceive(e.target.value)}
                   placeholder="0.0"
                 />
-                <span className="text-sm font-medium">{token2 ? token2.symbol : ''}</span>
+                <span className="text-sm font-medium">
+                  {tokenReceive ? tokenReceive.symbol : ''}
+                </span>
               </div>
-              {token2 && (
+              {tokenReceive && (
                 <p className="text-sm text-gray-500 mt-1">
-                  Balance: {token2.balance} {token2.symbol}
+                  Balance: {tokenReceive.balance} {tokenReceive.symbol}
                 </p>
               )}
             </div>
@@ -197,27 +217,29 @@ export default function AddLiquidity() {
           </p>
           <div className="space-y-4">
             <div>
-              <Label>Minimum {token1 ? token1.symbol : ''} Amount</Label>
+              <Label>Minimum {tokenPay ? tokenPay.symbol : ''} Amount</Label>
               <div className="flex items-center space-x-2">
                 <Input
                   type="text"
-                  value={minAmount1}
-                  onChange={(e) => setMinAmount1(e.target.value)}
+                  value={minAmountPay}
+                  onChange={(e) => setMinAmountPay(e.target.value)}
                   placeholder="0.0"
                 />
-                <span className="text-sm font-medium">{token1 ? token1.symbol : ''}</span>
+                <span className="text-sm font-medium">{tokenPay ? tokenPay.symbol : ''}</span>
               </div>
             </div>
             <div>
-              <Label>Minimum {token2 ? token2.symbol : ''} Amount</Label>
+              <Label>Minimum {tokenReceive ? tokenReceive.symbol : ''} Amount</Label>
               <div className="flex items-center space-x-2">
                 <Input
                   type="text"
-                  value={minAmount2}
-                  onChange={(e) => setMinAmount2(e.target.value)}
+                  value={minAmountReceive}
+                  onChange={(e) => setMinAmountReceive(e.target.value)}
                   placeholder="0.0"
                 />
-                <span className="text-sm font-medium">{token2 ? token2.symbol : ''}</span>
+                <span className="text-sm font-medium">
+                  {tokenReceive ? tokenReceive.symbol : ''}
+                </span>
               </div>
             </div>
           </div>
@@ -229,16 +251,17 @@ export default function AddLiquidity() {
       </Button>
 
       <TokenSelectionModal
-        isOpen={isToken1ModalOpen}
-        onClose={() => setIsToken1ModalOpen(false)}
-        onSelectToken={handleSelectToken1}
+        isOpen={isTokenPayModalOpen}
+        onClose={() => setIsTokenPayModalOpen(false)}
+        onSelectToken={handleSelectTokenPay}
         selectionType="from"
       />
       <TokenSelectionModal
-        isOpen={isToken2ModalOpen}
-        onClose={() => setIsToken2ModalOpen(false)}
-        onSelectToken={handleSelectToken2}
+        isOpen={isTokenReceiveModalOpen}
+        onClose={() => setIsTokenReceiveModalOpen(false)}
+        onSelectToken={handleSelectTokenReceive}
         selectionType="to"
+        availableTokenIds={availableTokenReceives}
       />
     </div>
   );

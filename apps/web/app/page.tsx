@@ -7,7 +7,7 @@ export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push('/swap/SUI/HENRY');
+    router.push('/swap/A/B');
   }, [router]);
 
   return <main></main>;

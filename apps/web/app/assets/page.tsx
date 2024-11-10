@@ -356,70 +356,76 @@ export default function Assets() {
                 Refresh
               </Button>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Token Name</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Value (USD)</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {assetMetadata.map((asset) => (
-                  <TableRow key={asset.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <img
-                          src={asset.metadata[4] || '/default-icon.png'}
-                          alt={asset.metadata[0] || `Asset ${asset.id}`}
-                          className="w-6 h-6 mr-2"
-                        />
-                        {asset.metadata[0] || `Asset ${asset.id}`}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(
-                        Number(asset.balance[0]) / Math.pow(10, asset.metadata[3])
-                      ).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">$N/A</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleActionClick('transfer', asset.id)}>
-                            <Send className="mr-2 h-4 w-4" />
-                            <span>Transfer</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleActionClick('transferAll', asset.id)}
-                          >
-                            <Send className="mr-2 h-4 w-4" />
-                            <span>Transfer All</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleActionClick('mint', asset.id)}>
-                            <Coins className="mr-2 h-4 w-4" />
-                            <span>Mint</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleActionClick('burn', asset.id)}>
-                            <Flame className="mr-2 h-4 w-4" />
-                            <span>Burn</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <div className="h-[calc(100vh-250px)] pr-4 overflow-y-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead className="text-right">Asset ID</TableHead>
+                    <TableHead className="text-right">Token Name</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Value (USD)</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {assetMetadata.map((asset) => (
+                    <TableRow key={asset.id}>
+                      <TableCell className="text-right whitespace-nowrap">#{asset.id}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end whitespace-nowrap">
+                          <img
+                            src={asset.metadata[4] || '/default-icon.png'}
+                            alt={asset.metadata[0] || `Asset ${asset.id}`}
+                            className="w-6 h-6 mr-2"
+                          />
+                          {asset.metadata[0] || `Asset ${asset.id}`}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap">
+                        {(
+                          Number(asset.balance[0]) / Math.pow(10, asset.metadata[3])
+                        ).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap">$N/A</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => handleActionClick('transfer', asset.id)}
+                            >
+                              <Send className="mr-2 h-4 w-4" />
+                              <span>Transfer</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleActionClick('transferAll', asset.id)}
+                            >
+                              <Send className="mr-2 h-4 w-4" />
+                              <span>Transfer All</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleActionClick('mint', asset.id)}>
+                              <Coins className="mr-2 h-4 w-4" />
+                              <span>Mint</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleActionClick('burn', asset.id)}>
+                              <Flame className="mr-2 h-4 w-4" />
+                              <span>Burn</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </>
       )}

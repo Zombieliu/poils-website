@@ -61,6 +61,7 @@ export default function TokenCreate({ onClose, onSelectTokens }: TokenCreateProp
                 }
               });
               setDigest(result.digest);
+              onClose();
             },
             onError: (error) => {
               console.log('executed transaction', error);

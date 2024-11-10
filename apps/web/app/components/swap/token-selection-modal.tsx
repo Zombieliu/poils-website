@@ -13,32 +13,50 @@ const quickSelectTokens = ['SUI'];
 function TokenSelectionModalOpen({
   onSelectToken,
   onClose,
-  selectionType
+  selectionType,
+  availableTokenIds
 }: {
   onSelectToken: (token: any) => void;
   onClose: () => void;
   selectionType: 'from' | 'to';
+  availableTokenIds?: number[];
 }) {
   const [_, setTokenSelectionOpen] = useAtom(TokenSelectionOpen);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [assetMetadata] = useAtom(AssetsMetadata);
-  const [filteredAssets, setFilteredAssets] = useState(assetMetadata);
+  const [filteredAssets, setFilteredAssets] = useState<typeof assetMetadata>([]);
+
+  useEffect(() => {
+    const initialFiltered = availableTokenIds
+      ? assetMetadata.filter((asset) => availableTokenIds.includes(asset.id))
+      : assetMetadata;
+    setFilteredAssets(initialFiltered);
+    setIsLoading(false);
+  }, [assetMetadata, availableTokenIds]);
 
   const filterTokens = useCallback(
     (term: string) => {
       setIsLoading(true);
       const lowercasedTerm = term.toLowerCase();
-      const filtered = assetMetadata.filter(
+
+      // 首先根据 availableTokenIds 过滤
+      let filtered = availableTokenIds
+        ? assetMetadata.filter((asset) => availableTokenIds.includes(asset.id))
+        : assetMetadata;
+
+      // 然后根据搜索词过滤
+      filtered = filtered.filter(
         (asset) =>
           asset.metadata[0].toLowerCase().includes(lowercasedTerm) || // name
           asset.metadata[1].toLowerCase().includes(lowercasedTerm) || // symbol
           asset.metadata[2].toLowerCase().includes(lowercasedTerm) // type
       );
+
       setFilteredAssets(filtered);
       setIsLoading(false);
     },
-    [assetMetadata]
+    [assetMetadata, availableTokenIds] // 添加 availableTokenIds 到依赖数组
   );
 
   const debouncedFilterTokens = useMemo(() => debounce(filterTokens, 300), [filterTokens]);
@@ -160,13 +178,15 @@ interface TokenSelectionModalProps {
   onClose: () => void;
   onSelectToken: (token: any) => void;
   selectionType: 'from' | 'to';
+  availableTokenIds?: number[];
 }
 
 const TokenSelectionModal: React.FC<TokenSelectionModalProps> = ({
   isOpen,
   onClose,
   onSelectToken,
-  selectionType
+  selectionType,
+  availableTokenIds
 }) => {
   if (!isOpen) return null;
 
@@ -175,6 +195,7 @@ const TokenSelectionModal: React.FC<TokenSelectionModalProps> = ({
       onSelectToken={onSelectToken}
       onClose={onClose}
       selectionType={selectionType}
+      availableTokenIds={availableTokenIds}
     />
   );
 };
