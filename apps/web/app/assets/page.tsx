@@ -100,6 +100,7 @@ export default function Assets() {
       console.log('Account address not available yet');
       return;
     }
+    console.log('account', account);
 
     try {
       const merak = initMerakClient();
