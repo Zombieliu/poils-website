@@ -23,7 +23,18 @@ const formatBalance = (balance: string, decimals: number): string => {
   if (isNaN(balanceNum)) return '0.0000';
   console.log('balanceNum', balanceNum);
   console.log('decimals', decimals);
-  return (balanceNum / Math.pow(10, decimals - 1)).toFixed(4);
+  return (balanceNum / 10 ** decimals).toFixed(4);
+  // balance = 1000000000;
+  // (decimals = 9), 1;
+  // (decimals = 8), 10;
+  // (decimals = 7), 100;
+  // (decimals = 6), 1000;
+  // (decimals = 5), 10000;
+  // (decimals = 4), 100000;
+  // (decimals = 3), 1000000;
+  // (decimals = 2), 10000000;
+  // (decimals = 1), 100000000;
+  // (decimals = 0), 1000000000;
 };
 
 export default function SwapPage({ params }: { params: { fromToken: string; toToken: string } }) {
@@ -278,7 +289,7 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
     await merak.swapExactTokensForTokens(
       tx,
       path,
-      parseFloat(payAmount) * fromToken?.decimals,
+      parseFloat(payAmount) * 10 ** fromToken?.decimals,
       0,
       account?.address,
       true
@@ -433,13 +444,6 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
             onClick={() => handleSwapTokens()}
           >
             {payAmount ? 'Swap' : 'Enter Amount'}
-          </Button>
-          <Button
-            className="w-full mt-4 bg-blue-500 text-white"
-            onClick={() => handleQueryPath()}
-            disabled={!isTokensReady}
-          >
-            {isTokensReady ? 'Test' : 'Loading tokens...'}
           </Button>
         </div>
         <TokenSelectionModal
