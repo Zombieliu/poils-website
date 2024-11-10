@@ -151,7 +151,7 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
 
   const getAmountOut = async (amount: string) => {
     const merak = initMerakClient();
-    const path = [fromToken?.id, toToken?.id];
+    const path = await merak.querySwapPaths(fromToken?.id, toToken?.id)[0];
     console.log('amount', amount);
     const asset_metadata = await merak.metadataOf(path[0]);
     console.log('asset_metadata', asset_metadata);
@@ -224,7 +224,7 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
       setToToken(fromToken);
       const merak = initMerakClient();
       const tx = new Transaction();
-      const path = [1, 0];
+      const path = await merak.querySwapPaths(fromToken?.id, toToken?.id)[0];
       let amount_out = await merak.swapTokensForExactTokens(
         tx,
         path,
