@@ -3,7 +3,7 @@
 import { atom } from 'jotai';
 
 export type Token = {
-  id: number;
+  id: number | null;
   name: string;
   symbol: string;
   description: string;
@@ -13,19 +13,19 @@ export type Token = {
 };
 
 export const fromTokenAtom = atom<Token>({
-  id: 0,
-  name: 'A',
-  symbol: 'A',
-  description: 'A',
+  id: null,
+  name: '',
+  symbol: '',
+  description: '',
   decimals: 1,
   icon: '',
   balance: ''
 });
 export const toTokenAtom = atom<Token>({
-  id: 1,
-  name: 'B',
-  symbol: 'B',
-  description: 'B',
+  id: null,
+  name: '',
+  symbol: '',
+  description: '',
   decimals: 1,
   icon: '',
   balance: ''

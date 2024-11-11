@@ -47,8 +47,8 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
   const [filteredAssets, setFilteredAssets] = useState(assetMetadata);
 
   // 明确指定 useAtom 的类型
-  const [fromToken, setFromToken] = useAtom<Token | null>(fromTokenAtom);
-  const [toToken, setToToken] = useAtom<Token | null>(toTokenAtom);
+  const [fromToken, setFromToken] = useAtom<Token>(fromTokenAtom);
+  const [toToken, setToToken] = useAtom<Token>(toTokenAtom);
 
   const [currentSelection, setCurrentSelection] = useState<'from' | 'to'>('from');
 
@@ -348,7 +348,7 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
   const [isTokensReady, setIsTokensReady] = useState(false);
 
   useEffect(() => {
-    if (fromToken?.id && toToken?.id) {
+    if (fromToken?.id !== null && toToken?.id !== null) {
       setIsTokensReady(true);
     } else {
       setIsTokensReady(false);
@@ -393,7 +393,7 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
                     setTokenSelectionOpen(true);
                   }}
                 >
-                  {fromToken ? (
+                  {fromToken?.id !== null ? (
                     <>
                       <img src={fromToken.icon} alt={fromToken.symbol} className="w-5 h-5 mr-2" />
                       {fromToken.symbol}
@@ -446,7 +446,7 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
                     setTokenSelectionOpen(true);
                   }}
                 >
-                  {toToken ? (
+                  {toToken?.id !== null ? (
                     <>
                       <img src={toToken.icon} alt={toToken.symbol} className="w-5 h-5 mr-2" />
                       {toToken.symbol}
