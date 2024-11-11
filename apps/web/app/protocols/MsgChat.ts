@@ -2,6 +2,6 @@
 // Feel free to delete it
 
 export interface MsgChat {
-    content: string,
-    time: Date
+  content: string;
+  time: Date;
 }

@@ -1,22 +1,17 @@
-import Link from "next/link"
-import React, { useState } from "react"
-import {
-  ConnectButton,
-  ConnectModal,
-  useCurrentAccount,
-} from "@mysten/dapp-kit";
-import { Sheet } from "@repo/ui/components/ui/sheet"
-import Assets from "../assets/page"
-import { ChevronDown } from "lucide-react";
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { ConnectButton, ConnectModal, useCurrentAccount } from '@mysten/dapp-kit';
+import { Sheet } from '@repo/ui/components/ui/sheet';
+import Assets from '@/app/assets/page';
+import { ChevronDown } from 'lucide-react';
 
 export default function Header() {
   const currentAccount = useCurrentAccount();
-	const [open, setOpen] = useState(false);
-	const [assetsSheetOpen, setAssetsSheetOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [assetsSheetOpen, setAssetsSheetOpen] = useState(false);
 
-  
   return (
-    <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
+    <header className="flex items-center justify-between px-4 py-3 bg-transparent border-b border-gray-200">
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
           <svg
@@ -29,59 +24,45 @@ export default function Header() {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-black"
+            className="text-blue-500"
           >
             <path d="M12 19V5" />
             <path d="M5 12l7-7 7 7" />
           </svg>
-          <span className="font-bold text-lg">Obelisk</span>
+          <span className="font-bold text-lg text-blue-500">Merak</span>
         </div>
-        <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">v0.1</span>
+        <span className="text-xs bg-blue-100 text-blue-500 px-2 py-1 rounded-full">v0.1</span>
       </div>
-      <nav className="hidden md:flex items-center space-x-4">
-      <Link href="/" className="text-sm font-medium hover:text-gray-600">
+      <nav className="hidden md:flex items-center space-x-6">
+        <Link href="/" className="text-sm font-medium text-gray-600 hover:text-blue-500">
           Swap
         </Link>
-        <Link href="/pool" className="text-sm font-medium hover:text-gray-600">
+        <Link href="/pool" className="text-sm font-medium text-gray-600 hover:text-blue-500">
           Earn
         </Link>
-        {/* <Link href="/staking" className="text-sm font-medium hover:text-gray-600">
-          Staking
-        </Link> */}
         <button
           onClick={() => setAssetsSheetOpen(true)}
-          className="text-sm font-medium hover:text-gray-600"
+          className="text-sm font-medium text-gray-600 hover:text-blue-500"
         >
           Assets
         </button>
-        <Link href="/create" className="text-sm font-medium hover:text-gray-600">
+        <Link href="/create" className="text-sm font-medium text-gray-600 hover:text-blue-500">
           Create Token
         </Link>
-        <Link href="/wrap" className="text-sm font-medium hover:text-gray-600">
-          Warp
+        <Link href="/wrap" className="text-sm font-medium text-gray-600 hover:text-blue-500">
+          Wrap
         </Link>
-        {/* <Link href="/bridge" className="text-sm font-medium hover:text-gray-600">
-          Bridge
-        </Link> */}
-        {/* <button className="text-sm font-medium hover:text-gray-600 flex items-center">
-          <span>Pool</span>
-          <ChevronDown className="ml-1 h-4 w-4" />
-        </button> */}
-        <Link href="/pool/liquidity" className="text-sm font-medium hover:text-gray-600">
+        <Link
+          href="/pool/liquidity"
+          className="text-sm font-medium text-gray-600 hover:text-blue-500"
+        >
           Pool
         </Link>
       </nav>
-      <ConnectButton />
-      {/* <ConnectModal
-        trigger={
-          <button disabled={!!currentAccount}> {currentAccount ? 'Connected' : 'Connect'}</button>
-        }
-        open={open}
-        onOpenChange={(isOpen) => setOpen(isOpen)}
-      /> */}
+      <ConnectButton className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded" />
       <Sheet open={assetsSheetOpen} onOpenChange={setAssetsSheetOpen}>
         <Assets />
       </Sheet>
     </header>
-  )
+  );
 }

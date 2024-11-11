@@ -1,20 +1,26 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Textarea } from "@repo/ui/components/ui/textarea"
-import { Checkbox } from "@repo/ui/components/ui/checkbox"
-import { InfoCircledIcon } from "@radix-ui/react-icons"
-import { Transaction, TransactionArgument, isValidSuiAddress } from "@0xobelisk/sui-client";
-import { init_obelisk_client, obelisk_client } from "../../jotai/obelisk";
-import { useAtom } from "jotai";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Textarea } from '@repo/ui/components/ui/textarea';
+import { Checkbox } from '@repo/ui/components/ui/checkbox';
+import { InfoCircledIcon } from '@radix-ui/react-icons';
+import {
+  SuiTransactionBlockResponse,
+  Transaction,
+  TransactionArgument,
+  isValidSuiAddress
+} from '@0xobelisk/sui-client';
+import { initMerakClient, merakClient } from '@/app/jotai/merak';
+import { useAtom } from 'jotai';
 import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-import { toast } from "sonner";
-import { ASSETS_ID } from "../../chain/config";
-import { Switch } from "@repo/ui/components/ui/switch";
-
+import { toast } from 'sonner';
+import { ASSETS_ID } from '@/app/chain/config';
+import { Switch } from '@repo/ui/components/ui/switch';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/ui/alert';
 
 interface BlobInfo {
   status: string;
@@ -30,44 +36,63 @@ interface BlobInfo {
 
 export default function Create() {
   const [uploadedBlobs, setUploadedBlobs] = useState<BlobInfo[]>([]);
-  const [tokenName, setTokenName] = useState("");
-  const [tokenSymbol, setTokenSymbol] = useState("");
-  const [description, setDescription] = useState("");
-  const [decimals, setDecimals] = useState("9");
+  const [tokenName, setTokenName] = useState('');
+  const [tokenSymbol, setTokenSymbol] = useState('');
+  const [description, setDescription] = useState('');
+  const [decimals, setDecimals] = useState('9');
   const [isFormComplete, setIsFormComplete] = useState(false);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
-  const [digest, setDigest] = useState("");
-  const [initialSupply, setInitialSupply] = useState("");
-  const [actualSupply, setActualSupply] = useState("");
-  const [sendTo, setSendTo] = useState("");
-  const [owner, setOwner] = useState("");
+  const [digest, setDigest] = useState('');
+  const [initialSupply, setInitialSupply] = useState('');
+  const [actualSupply, setActualSupply] = useState('');
+  const [sendTo, setSendTo] = useState('');
+  const [owner, setOwner] = useState('');
   const [isMintable, setIsMintable] = useState(false);
   const [isBurnable, setIsBurnable] = useState(false);
   const [isFreezable, setIsFreezable] = useState(false);
-  const [sendToError, setSendToError] = useState("");
-  const [ownerError, setOwnerError] = useState("");
+  const [sendToError, setSendToError] = useState('');
+  const [ownerError, setOwnerError] = useState('');
   const [useSendToMyAddress, setUseSendToMyAddress] = useState(false);
   const [useOwnerMyAddress, setUseOwnerMyAddress] = useState(false);
   const account = useCurrentAccount();
-  
-  const basePubslisherUrl = "https://publisher-devnet.walrus.space"
-  const Aggregator = "https://aggregator-devnet.walrus.space"
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // const basePubslisherUrl = 'https://publisher-devnet.walrus.space';
+  // const Aggregator = 'https://aggregator-devnet.walrus.space';
+
+  const basePubslisherUrl = 'https://publisher.walrus-testnet.walrus.space';
+  const Aggregator = 'https://aggregator.walrus-testnet.walrus.space';
+
+  // const basePubslisherUrl = 'https://walrus-testnet-publisher.bartestnet.com';
+  // const Aggregator = 'https://walrus-testnet-publisher.bartestnet.com';
 
   useEffect(() => {
     // Update form completion check
-    const isComplete = 
-      tokenName !== "" && 
-      tokenSymbol !== "" && 
-      description !== "" && 
-      decimals !== "" && 
-      initialSupply !== "" &&
-      sendTo !== "" &&
-      owner !== "" &&
+    const isComplete =
+      tokenName !== '' &&
+      tokenSymbol !== '' &&
+      description !== '' &&
+      decimals !== '' &&
+      initialSupply !== '' &&
+      sendTo !== '' &&
+      owner !== '' &&
       uploadedBlobs.length > 0 &&
       !sendToError &&
       !ownerError;
     setIsFormComplete(isComplete);
-  }, [tokenName, tokenSymbol, description, decimals, initialSupply, sendTo, owner, uploadedBlobs, sendToError, ownerError]);
+  }, [
+    tokenName,
+    tokenSymbol,
+    description,
+    decimals,
+    initialSupply,
+    sendTo,
+    owner,
+    uploadedBlobs,
+    sendToError,
+    ownerError
+  ]);
 
   useEffect(() => {
     if (initialSupply && decimals) {
@@ -101,26 +126,29 @@ export default function Create() {
     const file = e.target.files?.[0];
     if (file) {
       const numEpochs = 1; // Adjust as needed
-  
+      setIsUploading(true);
+      setUploadError(null);
+
       try {
         const response = await fetch(`${basePubslisherUrl}/v1/store?epochs=${numEpochs}`, {
-          method: "PUT",
-          body: file,
+          method: 'PUT',
+          body: file
         });
-  
+
         if (response.status === 200) {
           const storage_info = await response.json();
+          console.log('storage_info', storage_info);
           const blobInfo = processUploadResponse(storage_info, file.type);
-          setUploadedBlobs(prevBlobs => [blobInfo, ...prevBlobs]);
-          
-          // Close Token Image upload area
+          setUploadedBlobs((prevBlobs) => [blobInfo, ...prevBlobs]);
           closeTokenImageArea();
         } else {
-          throw new Error("Something went wrong when storing the blob!");
+          throw new Error('Something went wrong when storing the blob!');
         }
       } catch (error) {
-        console.error("Upload error:", error);
-        // Handle error (e.g., show error message to user)
+        console.error('Upload error:', error);
+        setUploadError('An error occurred while uploading. Please try again.');
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -130,7 +158,7 @@ export default function Create() {
     if (tokenImageArea) {
       tokenImageArea.style.display = 'none';
     }
-    
+
     // Optionally hide the parent element of the upload area
     const uploadArea = tokenImageArea?.closest('label');
     if (uploadArea) {
@@ -139,47 +167,55 @@ export default function Create() {
   };
 
   const processUploadResponse = (storage_info: any, media_type: string): BlobInfo => {
-    const SUI_NETWORK = "testnet";
+    const SUI_NETWORK = 'testnet';
     const SUI_VIEW_TX_URL = `https://suiscan.xyz/${SUI_NETWORK}/tx`;
     const SUI_VIEW_OBJECT_URL = `https://suiscan.xyz/${SUI_NETWORK}/object`;
 
     let info: BlobInfo;
-    if ("alreadyCertified" in storage_info) {
+    if ('alreadyCertified' in storage_info) {
       info = {
-        status: "Already certified",
+        status: 'Already certified',
         blobId: storage_info.alreadyCertified.blobId,
         endEpoch: storage_info.alreadyCertified.endEpoch,
-        suiRefType: "Previous Sui Certified Event",
-        suiRef: storage_info.alreadyCertified.event.txDigest,
+        suiRefType: 'Previous Sui Certified Event',
+        suiRef: storage_info.alreadyCertified.eventOrObject.Event.txDigest,
         suiBaseUrl: SUI_VIEW_TX_URL,
         blobUrl: `${Aggregator}/v1/${storage_info.alreadyCertified.blobId}`,
-        isImage: media_type.startsWith("image"),
+        isImage: media_type.startsWith('image'),
         media_type: media_type
       };
-    } else if ("newlyCreated" in storage_info) {
+      console.log(media_type.startsWith('image'));
+    } else if ('newlyCreated' in storage_info) {
       info = {
-        status: "Newly created",
+        status: 'Newly created',
         blobId: storage_info.newlyCreated.blobObject.blobId,
         endEpoch: storage_info.newlyCreated.blobObject.storage.endEpoch,
-        suiRefType: "Associated Sui Object",
+        suiRefType: 'Associated Sui Object',
         suiRef: storage_info.newlyCreated.blobObject.id,
         suiBaseUrl: SUI_VIEW_OBJECT_URL,
         blobUrl: `${Aggregator}/v1/${storage_info.newlyCreated.blobObject.blobId}`,
-        isImage: media_type.startsWith("image"),
+        isImage: media_type.startsWith('image'),
         media_type: media_type
       };
+      console.log(media_type.startsWith('image'));
     } else {
-      throw Error("Unhandled successful response!");
+      throw Error('Unhandled successful response!');
     }
 
     return info;
   };
 
+  // 在组件顶部添加这个工具函数
+  const truncateMiddle = (str: string, startLength = 6, endLength = 4) => {
+    if (str.length <= startLength + endLength) return str;
+    return `${str.slice(0, startLength)}...${str.slice(-endLength)}`;
+  };
+
   const validateAddress = (address: string, setError: (error: string) => void) => {
     if (!isValidSuiAddress(address)) {
-      setError("Invalid Sui address");
+      setError('Invalid Sui address');
     } else {
-      setError("");
+      setError('');
     }
   };
 
@@ -217,116 +253,135 @@ export default function Create() {
     }
   };
 
-  const handleMint = async() => {
-    // 在这里添加铸造逻辑
-    console.log("Minting token...");
-    const obelisk = await init_obelisk_client()
-    const mintInfo = {
-      tokenName,
-      tokenSymbol,
-      description,
-      decimals: parseInt(decimals, 10),
-      blobUrl: uploadedBlobs[0]?.blobUrl, // Assuming we use the first uploaded blob
-      initialSupply: BigInt(parseFloat(initialSupply) * Math.pow(10, parseInt(decimals, 10)))
-    };
-    let tx = new Transaction();
-    let params: TransactionArgument[] = [
-        tx.object(ASSETS_ID),
-        tx.pure.string(tokenName),
-        tx.pure.string(tokenSymbol),
-        tx.pure.string(description),
-        tx.pure.u8(mintInfo.decimals),
-        tx.pure.string(mintInfo.blobUrl),
-        tx.pure.string(mintInfo.blobUrl),
-        tx.pure.u64(mintInfo.initialSupply), // Use the adjusted initialSupply
-        tx.pure.address(sendTo),
-        tx.pure.address(owner),
-        tx.pure.bool(isMintable),
-        tx.pure.bool(isBurnable),
-        tx.pure.bool(isFreezable),
-    ];
-    console.log("ASSETS_ID", ASSETS_ID);
-    console.log("tokenSymbol", tokenSymbol);
-    console.log("description", description);
-    console.log("decimals", mintInfo.decimals);
-    console.log("initialSupply", mintInfo.initialSupply);
-    console.log("sendTo", sendTo);
-    console.log("owner", owner);
-    console.log("isMintable", isMintable);
-    console.log("isBurnable", isBurnable);
-    console.log("isFreezable", isFreezable);
-    
-    await obelisk.tx.assets_system.create(tx, params, undefined, true);
-    await signAndExecuteTransaction(
-      {
-        transaction: tx.serialize(),
-        chain: `sui:testnet`,
-      },
-      {
-        onSuccess: (result) => {
-          console.log('executed transaction', result);
-          toast("Translation Successful", {
-            description: new Date().toUTCString(),
-            action: {
-              label: "Check in Explorer",
-              onClick: () => window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, "_blank"),
-            },
-          });
-          setDigest(result.digest);
+  const handleCreate = async () => {
+    try {
+      const merak = initMerakClient();
+      const mintInfo = {
+        tokenName,
+        tokenSymbol,
+        description,
+        decimals: parseInt(decimals, 10),
+        blobUrl: uploadedBlobs[0]?.blobUrl,
+        initialSupply: BigInt(parseFloat(initialSupply) * Math.pow(10, parseInt(decimals, 10)))
+      };
+      let tx = new Transaction();
+
+      console.log('ASSETS_ID', ASSETS_ID);
+      console.log('tokenSymbol', tokenSymbol);
+      console.log('description', description);
+      console.log('decimals', mintInfo.decimals);
+      console.log('initialSupply', mintInfo.initialSupply);
+      console.log('sendTo', sendTo);
+      console.log('owner', owner);
+      console.log('isMintable', isMintable);
+      console.log('isBurnable', isBurnable);
+      console.log('isFreezable', isFreezable);
+
+      await merak.create(
+        tx,
+        tokenName,
+        tokenSymbol,
+        description,
+        mintInfo.decimals,
+        mintInfo.blobUrl,
+        mintInfo.blobUrl,
+        mintInfo.initialSupply, // Use the adjusted initialSupply
+        sendTo,
+        owner,
+        isMintable,
+        isBurnable,
+        isFreezable,
+        true
+      );
+
+      // const result = await signAndExecuteTransaction({
+      //   transaction: tx.serialize(),
+      //   chain: `sui:testnet`
+      // });
+
+      await signAndExecuteTransaction(
+        {
+          transaction: tx.serialize(),
+          chain: `sui:testnet`
         },
-        onError: error => {
-          console.log('executed transaction', error);
-        },
-      },
-    );
+        {
+          onSuccess: (result) => {
+            console.log('executed transaction', result);
+            toast('Translation Successful', {
+              description: new Date().toUTCString(),
+              action: {
+                label: 'Check in Explorer',
+                onClick: () =>
+                  window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
+              }
+            });
+            setDigest(result.digest);
+          },
+          onError: (error) => {
+            console.log('executed transaction', error);
+          }
+        }
+      );
+      console.log('Already minted');
+      // 添加成功提示
+    } catch (error) {
+      console.error('Minting failed:', error);
+      // 添加错误提示
+    }
   };
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-purple-100 p-4">
-      <h1 className="text-3xl font-bold text-center mb-12">Create a New Poils Token</h1>
-      
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-white via-pink-100 to-purple-100 p-4">
+      <h1 className="text-3xl font-bold text-center mb-12">Create a New Merak Token</h1>
+
       <div className="max-w-3xl mx-auto space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
               <Label htmlFor="tokenName">Token Name</Label>
-              <Input 
-                id="tokenName" 
-                placeholder="Enter token name" 
+              <Input
+                id="tokenName"
+                placeholder="Enter token name"
                 value={tokenName}
                 onChange={(e) => setTokenName(e.target.value)}
               />
             </div>
             <div>
               <Label htmlFor="tokenSymbol">Token Symbol</Label>
-              <Input 
-                id="tokenSymbol" 
-                placeholder="Enter token symbol" 
+              <Input
+                id="tokenSymbol"
+                placeholder="Enter token symbol"
                 value={tokenSymbol}
                 onChange={(e) => setTokenSymbol(e.target.value)}
               />
             </div>
             <div>
               <Label htmlFor="description">Description</Label>
-              <Textarea 
-                id="description" 
-                placeholder="Enter token description" 
+              <Textarea
+                id="description"
+                placeholder="Enter token description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="decimals">Decimals</Label>
-              <Input id="decimals" type="number" placeholder="Enter decimals" />
+              <Input
+                id="decimals"
+                type="number"
+                placeholder="Enter decimals"
+                value={decimals}
+                onChange={(e) => setDecimals(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="initialSupply">Initial Supply</Label>
-              <Input 
-                id="initialSupply" 
-                type="number" 
-                placeholder="Enter initial supply" 
+              <Input
+                id="initialSupply"
+                type="number"
+                placeholder="Enter initial supply"
                 value={initialSupply}
                 onChange={(e) => setInitialSupply(e.target.value)}
               />
@@ -353,33 +408,41 @@ export default function Create() {
             </div>
           </div>
         </div>
-        
+
         <div className="mt-6 space-y-4">
           <div>
             <Label htmlFor="sendTo">Send To</Label>
             <div className="flex items-center space-x-2 mb-2">
-              <Switch id="useSendToMyAddress" checked={useSendToMyAddress} onCheckedChange={handleUseSendToMyAddress} />
+              <Switch
+                id="useSendToMyAddress"
+                checked={useSendToMyAddress}
+                onCheckedChange={handleUseSendToMyAddress}
+              />
               <Label htmlFor="useSendToMyAddress">Use my address</Label>
             </div>
-            <Input 
-              id="sendTo" 
-              placeholder="Enter recipient address" 
+            <Input
+              id="sendTo"
+              placeholder="Enter recipient address"
               value={sendTo}
               onChange={handleSendToChange}
               disabled={useSendToMyAddress}
             />
             {sendToError && <p className="text-red-500 text-sm mt-1">{sendToError}</p>}
           </div>
-          
+
           <div>
             <Label htmlFor="owner">Owner</Label>
             <div className="flex items-center space-x-2 mb-2">
-              <Switch id="useOwnerMyAddress" checked={useOwnerMyAddress} onCheckedChange={handleUseOwnerMyAddress} />
+              <Switch
+                id="useOwnerMyAddress"
+                checked={useOwnerMyAddress}
+                onCheckedChange={handleUseOwnerMyAddress}
+              />
               <Label htmlFor="useOwnerMyAddress">Use my address</Label>
             </div>
-            <Input 
-              id="owner" 
-              placeholder="Enter owner address" 
+            <Input
+              id="owner"
+              placeholder="Enter owner address"
               value={owner}
               onChange={handleOwnerChange}
               disabled={useOwnerMyAddress}
@@ -387,52 +450,115 @@ export default function Create() {
             {ownerError && <p className="text-red-500 text-sm mt-1">{ownerError}</p>}
           </div>
         </div>
-        
+
         <div className="mt-6">
           <Label htmlFor="projectImage">Token Image:</Label>
 
           <div className="mt-1">
             <div className="flex items-center justify-center w-full">
-              <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+              <label
+                htmlFor="dropzone-file"
+                className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+              >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C4.157 4.688 3 4.345 3 5.587V14a1 1 0 0 0 1 1h8Z"/>
-                  </svg>
-                  <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+                  {isUploading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-2"></div>
+                      <span>Uploading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-8 h-8 mb-4 text-gray-500"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 20 16"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C4.157 4.688 3 4.345 3 5.587V14a1 1 0 0 0 1 1h8Z"
+                        />
+                      </svg>
+                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        SVG, PNG, JPG or GIF (MAX. 10MB)
+                      </p>
+                    </>
+                  )}
                 </div>
-                <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} />
+                <input
+                  id="dropzone-file"
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                />
               </label>
             </div>
           </div>
         </div>
-        
+
+        {uploadError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{uploadError}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Moved uploaded file information display section */}
-        <section id="uploaded-blobs" className="space-y-4">
+        <section id="uploaded-blobs" className="space-y-4 w-full max-w-3xl">
           {uploadedBlobs.map((info, index) => (
             <article key={index} className="border rounded-lg shadow-sm p-4 bg-gray-50">
-              <div className="flex">
+              <div className="flex items-center gap-6">
                 {info.isImage && (
-                  <object type={info.media_type} data={info.blobUrl}
-                    className="w-1/3 h-auto object-cover rounded-lg mr-4"></object>
+                  <div className="w-32 h-32 flex-shrink-0">
+                    <object
+                      type={info.media_type}
+                      data={info.blobUrl}
+                      className="w-full h-full object-contain rounded-lg"
+                    ></object>
+                  </div>
                 )}
-                <dl className="blob-info flex-1">
-                  <div className="mb-2">
-                    <dt className="font-semibold">Status</dt>
+                <dl className="blob-info flex-1 space-y-2">
+                  <div>
+                    <dt className="font-semibold text-gray-700">Status</dt>
                     <dd>{info.status}</dd>
                   </div>
-                  <div className="mb-2">
-                    <dt className="font-semibold">Blob ID</dt>
-                    <dd className="truncate"><a href={info.blobUrl} className="text-blue-600 hover:underline">{info.blobId}</a></dd>
-                  </div>
-                  <div className="mb-2">
-                    <dt className="font-semibold">{info.suiRefType}</dt>
-                    <dd className="truncate">
-                      <a href={`${info.suiBaseUrl}/${info.suiRef}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{info.suiRef}</a>
+                  <div>
+                    <dt className="font-semibold text-gray-700">Blob ID</dt>
+                    <dd>
+                      <a
+                        href={info.blobUrl}
+                        className="text-blue-600 hover:underline"
+                        title={info.blobId}
+                      >
+                        {info.blobId}
+                      </a>
                     </dd>
                   </div>
                   <div>
-                    <dt className="font-semibold">Stored until epoch</dt>
+                    <dt className="font-semibold text-gray-700">{info.suiRefType}</dt>
+                    <dd>
+                      <a
+                        href={`${info.suiBaseUrl}/${info.suiRef}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                        title={info.suiRef}
+                      >
+                        {truncateMiddle(info.suiRef, 18, 16)}
+                      </a>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-gray-700">Stored until epoch</dt>
                     <dd>{info.endEpoch}</dd>
                   </div>
                 </dl>
@@ -440,14 +566,16 @@ export default function Create() {
             </article>
           ))}
         </section>
-        
+
         {/* Conditional rendering for Mint button */}
         {isFormComplete ? (
-          <Button className="mt-8" onClick={handleMint}>Mint</Button>
+          <Button className="mt-8" onClick={handleCreate}>
+            Create
+          </Button>
         ) : (
           <p className="mt-8 text-gray-500">Please complete all fields to enable minting</p>
         )}
       </div>
     </div>
-  )
+  );
 }

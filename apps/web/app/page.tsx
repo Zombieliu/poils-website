@@ -1,18 +1,14 @@
-"use client";
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-
 
 export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push('/swap/SUI/HENRY');
+    router.push('/swap/A/B');
   }, [router]);
 
-  return (
-    <main>
-    </main>
-  );
+  return <main></main>;
 }

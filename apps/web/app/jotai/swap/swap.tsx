@@ -1,11 +1,8 @@
-"use client";
+'use client';
 
-import { atom } from "jotai";
+import { atom } from 'jotai';
 
 const TokenSelectionOpen = atom(false);
-const AssetsMetadata= atom<any[]>([]);
+const AssetsMetadata = atom<any[]>([]);
 
-export {
-    TokenSelectionOpen,
-    AssetsMetadata
-}
+export { TokenSelectionOpen, AssetsMetadata };
