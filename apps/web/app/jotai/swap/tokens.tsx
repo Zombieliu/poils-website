@@ -2,15 +2,31 @@
 
 import { atom } from 'jotai';
 
-export interface Token {
+export type Token = {
   id: number;
   name: string;
   symbol: string;
   description: string;
   decimals: number;
   icon: string;
-  balance: string | string[];
-}
+  balance: string;
+};
 
-export const fromTokenAtom = atom<Token | null>(null);
-export const toTokenAtom = atom<Token | null>(null);
+export const fromTokenAtom = atom<Token>({
+  id: 0,
+  name: 'A',
+  symbol: 'A',
+  description: 'A',
+  decimals: 1,
+  icon: '',
+  balance: ''
+});
+export const toTokenAtom = atom<Token>({
+  id: 1,
+  name: 'B',
+  symbol: 'B',
+  description: 'B',
+  decimals: 1,
+  icon: '',
+  balance: ''
+});
