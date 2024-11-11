@@ -280,42 +280,69 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
   };
 
   const handleSwapTokens = async () => {
-    console.log('handleSwapTokens 123123');
-    const merak = initMerakClient();
-    const tx = new Transaction();
-    const path = (await merak.querySwapPaths(fromToken?.id, toToken?.id))[0];
-    console.log('path', path);
-    console.log(path, parseFloat(payAmount) * fromToken?.decimals, 0, account?.address);
-    await merak.swapExactTokensForTokens(
-      tx,
-      path,
-      parseFloat(payAmount) * 10 ** fromToken?.decimals,
-      0,
-      account?.address,
-      true
-    );
-    await signAndExecuteTransaction(
-      {
-        transaction: tx.serialize(),
-        chain: `sui:testnet`
-      },
-      {
-        onSuccess: (result) => {
-          console.log('executed transaction', result);
-          toast('Translation Successful', {
-            description: new Date().toUTCString(),
-            action: {
-              label: 'Check in Explorer',
-              onClick: () =>
-                window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
-            }
-          });
-        },
-        onError: (error) => {
-          console.log('executed transaction', error);
-        }
+    // 1. 检查必要参数是否存在
+    if (!fromToken?.id || !toToken?.id || !account?.address) {
+      toast.error('请确保已选择代币并连接钱包');
+      return;
+    }
+
+    try {
+      const merak = initMerakClient();
+      const tx = new Transaction();
+
+      // 2. 添加路径检查
+      const paths = await merak.querySwapPaths(fromToken.id, toToken.id);
+      if (!paths || paths.length === 0) {
+        toast.error('找不到有效的交换路径');
+        return;
       }
-    );
+      const path = paths[0];
+
+      // 3. 添加金额检查和转换
+      const amountIn = parseFloat(payAmount);
+      if (isNaN(amountIn) || amountIn <= 0) {
+        toast.error('请输入有效的交换金额');
+        return;
+      }
+
+      const amountInWithDecimals = BigInt(Math.floor(amountIn * 10 ** fromToken.decimals));
+
+      // 4. 执行交换
+      await merak.swapExactTokensForTokens(
+        tx,
+        path,
+        amountInWithDecimals,
+        0,
+        account.address,
+        true
+      );
+
+      await signAndExecuteTransaction(
+        {
+          transaction: tx.serialize(),
+          chain: `sui:testnet`
+        },
+        {
+          onSuccess: (result) => {
+            console.log('executed transaction', result);
+            toast('Translation Successful', {
+              description: new Date().toUTCString(),
+              action: {
+                label: 'Check in Explorer',
+                onClick: () =>
+                  window.open(`https://testnet.suivision.xyz/txblock/${result.digest}`, '_blank')
+              }
+            });
+          },
+          onError: (error) => {
+            console.log('executed transaction', error);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Swap error:', error);
+      toast.error(error instanceof Error ? error.message : '交换失败');
+    }
   };
 
   const [isTokensReady, setIsTokensReady] = useState(false);
