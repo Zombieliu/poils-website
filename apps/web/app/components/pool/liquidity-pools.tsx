@@ -8,18 +8,21 @@ import LiquidityPoolSetup from '@/app/components/pool/create/liquidity-pool-setu
 import { Dialog, DialogContent } from '@repo/ui/components/ui/dialog';
 import { SelectedPoolTokens } from '@/app/jotai/pool/pool';
 import { useAtom } from 'jotai';
+import { initMerakClient } from '@/app/jotai/merak';
+import { useRouter } from 'next/navigation';
 
 export default function LiquidityPools() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredPools, setFilteredPools] = useState([]);
-  const [pools, setPools] = useState([]);
+  const [filteredPools, setFilteredPools] = useState<PoolType[]>([]);
+  const [pools, setPools] = useState<PoolType[]>([]);
   const [category, setCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Default');
   const [viewMode, setViewMode] = useState('card'); // 'card' or 'table'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<'select' | 'setup'>('select');
   const [selectedTokens, setSelectedTokens] = useAtom(SelectedPoolTokens);
+  const router = useRouter();
 
   const categories = [
     'All',
@@ -43,84 +46,147 @@ export default function LiquidityPools() {
     '24h Change'
   ];
 
-  const fetchPools = useCallback(() => {
+  type PoolType = {
+    name: string;
+    asset1Id: number;
+    asset2Id: number;
+    apr: string;
+    liquidity: string;
+    volume: string;
+    feeTier: string;
+    token1Image: string;
+    token2Image: string;
+  };
+
+  const queryPoolList = async () => {
+    const merak = initMerakClient();
+    const savedPools = [];
+    try {
+      const poolList = await merak.getPoolList();
+      const pools = Array.isArray(poolList[0]) ? poolList[0] : poolList;
+
+      if (pools && pools.length > 0) {
+        await Promise.all(
+          pools.map(async (pool) => {
+            const asset1Metadata = await merak.metadataOf(pool.asset1_id);
+            const asset2Metadata = await merak.metadataOf(pool.asset2_id);
+            const poolAsset1Amount = await merak.balanceOf(
+              pool.asset1_id,
+              '0x' + pool.pool_address
+            );
+            const poolAsset2Amount = await merak.balanceOf(
+              pool.asset2_id,
+              '0x' + pool.pool_address
+            );
+            const poolAsset1AmountNum = parseFloat(poolAsset1Amount[0]) / 10 ** asset1Metadata[3];
+            const poolAsset2AmountNum = parseFloat(poolAsset2Amount[0]) / 10 ** asset2Metadata[3];
+            console.log('poolAsset1Amount ===========');
+            console.log(poolAsset1Amount, poolAsset2Amount);
+            const poolInfo: PoolType = {
+              name: `${asset1Metadata[1]} / ${asset2Metadata[1]}`,
+              asset1Id: pool.asset1_id,
+              asset2Id: pool.asset2_id,
+              apr: '10%',
+              liquidity: `${poolAsset1AmountNum} ${asset1Metadata[1]} / ${poolAsset2AmountNum} ${asset2Metadata[1]}`,
+              volume: `${poolAsset1AmountNum + poolAsset2AmountNum}`,
+              feeTier: '1%',
+              token1Image: asset1Metadata[4],
+              token2Image: asset2Metadata[4]
+            };
+            console.log('here ======= poolInfo', poolInfo);
+            savedPools.push(poolInfo);
+          })
+        );
+        setPools(savedPools);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchPools = useCallback(async () => {
+    await queryPoolList();
+
     setIsLoading(true);
+
     // Simulate API call
-    setTimeout(() => {
-      setPools([
-        {
-          name: 'BLUB / SUI',
-          apr: '432.17%',
-          liquidity: '$732,615',
-          volume: '$819,691',
-          feeTier: '1%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        },
-        {
-          name: 'AAA / SUI',
-          apr: '359.04%',
-          liquidity: '$48,707',
-          volume: '$43,353',
-          feeTier: '1%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        },
-        {
-          name: 'PUFF / SUI',
-          apr: '127.61%',
-          liquidity: '$84,279',
-          volume: '$25,720',
-          feeTier: '1%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        },
-        {
-          name: 'LIQ / TURBOS',
-          apr: '620.04%',
-          liquidity: '$14,826',
-          volume: '$19,263',
-          feeTier: '1%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        },
-        {
-          name: 'SUI / USDC',
-          apr: '328.72%',
-          liquidity: '$2,234,003',
-          volume: '$5,355,934',
-          feeTier: '0.3%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        },
-        {
-          name: 'USDT / USDC',
-          apr: '20.78%',
-          liquidity: '$5,364,358',
-          volume: '$1,642,141',
-          feeTier: '0.01%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        },
-        {
-          name: 'FUD / SUI',
-          apr: '499.64%',
-          liquidity: '$486,326',
-          volume: '$665,726',
-          feeTier: '1%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        },
-        {
-          name: 'LIQ / SUI',
-          apr: '307.52%',
-          liquidity: '$259,579',
-          volume: '$318,707',
-          feeTier: '1%',
-          token1Image: 'https://hop.ag/tokens/SUI.svg',
-          token2Image: 'https://hop.ag/tokens/SUI.svg'
-        }
-      ]);
+    setTimeout(async () => {
+      await queryPoolList();
+
+      // setPools([
+      //   {
+      //     name: 'BLUB / SUI',
+      //     apr: '432.17%',
+      //     liquidity: '$732,615',
+      //     volume: '$819,691',
+      //     feeTier: '1%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   },
+      //   {
+      //     name: 'AAA / SUI',
+      //     apr: '359.04%',
+      //     liquidity: '$48,707',
+      //     volume: '$43,353',
+      //     feeTier: '1%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   },
+      //   {
+      //     name: 'PUFF / SUI',
+      //     apr: '127.61%',
+      //     liquidity: '$84,279',
+      //     volume: '$25,720',
+      //     feeTier: '1%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   },
+      //   {
+      //     name: 'LIQ / TURBOS',
+      //     apr: '620.04%',
+      //     liquidity: '$14,826',
+      //     volume: '$19,263',
+      //     feeTier: '1%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   },
+      //   {
+      //     name: 'SUI / USDC',
+      //     apr: '328.72%',
+      //     liquidity: '$2,234,003',
+      //     volume: '$5,355,934',
+      //     feeTier: '0.3%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   },
+      //   {
+      //     name: 'USDT / USDC',
+      //     apr: '20.78%',
+      //     liquidity: '$5,364,358',
+      //     volume: '$1,642,141',
+      //     feeTier: '0.01%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   },
+      //   {
+      //     name: 'FUD / SUI',
+      //     apr: '499.64%',
+      //     liquidity: '$486,326',
+      //     volume: '$665,726',
+      //     feeTier: '1%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   },
+      //   {
+      //     name: 'LIQ / SUI',
+      //     apr: '307.52%',
+      //     liquidity: '$259,579',
+      //     volume: '$318,707',
+      //     feeTier: '1%',
+      //     token1Image: 'https://hop.ag/tokens/SUI.svg',
+      //     token2Image: 'https://hop.ag/tokens/SUI.svg'
+      //   }
+      // ]);
       setIsLoading(false);
     }, 2000);
   }, []);
@@ -130,10 +196,15 @@ export default function LiquidityPools() {
   }, [fetchPools]);
 
   useEffect(() => {
-    const filtered = pools.filter((pool) =>
-      pool.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredPools(filtered);
+    if (pools.length > 0) {
+      console.log('pools ===========');
+      console.log(pools);
+      console.log(pools.length);
+      const filtered = pools.filter((pool) =>
+        pool.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredPools(filtered);
+    }
   }, [searchTerm, pools]);
 
   const handleViewModeChange = () => {
@@ -218,7 +289,14 @@ export default function LiquidityPools() {
               <span>{pool.feeTier}</span>
             </div>
           </div>
-          <button className="w-full bg-indigo-600 text-white p-2 rounded">Add Liquidity</button>
+          <button
+            className="w-full bg-indigo-600 text-white p-2 rounded"
+            onClick={() => {
+              router.push(`/pool/liquidity?asset1=${pool.asset1Id}&asset2=${pool.asset2Id}`);
+            }}
+          >
+            Add Liquidity
+          </button>
         </div>
       ))}
     </div>
@@ -252,7 +330,14 @@ export default function LiquidityPools() {
             <td className="text-green-400">{pool.apr}</td>
             <td>{/* Rewards icon */}</td>
             <td>
-              <button className="text-blue-400">+</button>
+              <button
+                className="text-blue-400"
+                onClick={() => {
+                  router.push(`/pool/liquidity?asset1=${pool.asset1Id}&asset2=${pool.asset2Id}`);
+                }}
+              >
+                +
+              </button>
             </td>
           </tr>
         ))}
