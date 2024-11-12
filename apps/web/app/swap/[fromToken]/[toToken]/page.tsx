@@ -202,7 +202,15 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
   // 获取输出金额
   const getAmountOut = useCallback(
     async (amount: string) => {
-      if (!fromToken?.id || !toToken?.id) {
+      console.log(fromToken);
+      console.log(toToken);
+      console.log(!fromToken?.id || !toToken?.id);
+      if (
+        fromToken?.id === undefined ||
+        fromToken?.id === null ||
+        toToken?.id === undefined ||
+        toToken?.id === null
+      ) {
         throw new Error('请先选择代币');
       }
 
@@ -243,14 +251,15 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
         if (!amountOutResult || !toToken?.decimals) {
           throw new Error('计算结果无效');
         }
-
         const amountOut = BigInt(amountOutResult[0]);
+
         const calculatedReceiveAmount = (Number(amountOut) / 10 ** toToken.decimals).toFixed(9);
 
         setReceiveAmount(calculatedReceiveAmount);
         setDollarValuePay(`$${(parseFloat(amount) * 1).toFixed(2)}`);
         setDollarValueReceive(`$${(parseFloat(calculatedReceiveAmount) * 1).toFixed(2)}`);
       } catch (error) {
+        console.log(error.message);
         console.error('计算输出金额错误:', error);
         toast.error(error instanceof Error ? error.message : '计算失败');
         setReceiveAmount('');
@@ -280,8 +289,14 @@ export default function SwapPage({ params }: { params: { fromToken: string; toTo
   };
 
   const handleSwapTokens = async () => {
-    // 1. 检查必要参数是否存在
-    if (!fromToken?.id || !toToken?.id || !account?.address) {
+    // 使用更严格的检查
+    if (
+      fromToken?.id === undefined ||
+      fromToken?.id === null ||
+      toToken?.id === undefined ||
+      toToken?.id === null ||
+      !account?.address
+    ) {
       toast.error('请确保已选择代币并连接钱包');
       return;
     }

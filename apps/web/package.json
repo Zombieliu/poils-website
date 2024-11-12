@@ -11,7 +11,7 @@
   "dependencies": {
     "@0xobelisk/sov-client": "0.2.8",
     "@0xobelisk/sui-client": "0.5.27",
-    "@0xobelisk/merak-sdk": "0.0.2",
+    "@0xobelisk/merak-sdk": "0.0.6",
     "@mysten/dapp-kit": "0.14.17",
     "@mysten/enoki": "^0.4.0",
     "@mysten/sui": "1.7.0",
