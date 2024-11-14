@@ -24,8 +24,8 @@ importers:
   apps/web:
     dependencies:
       '@0xobelisk/merak-sdk':
-        specifier: 0.0.6
-        version: 0.0.6(typescript@5.6.3)
+        specifier: 0.0.7
+        version: 0.0.7(typescript@5.6.3)
       '@0xobelisk/sov-client':
         specifier: 0.2.8
         version: 0.2.8(graphql@16.9.0)(typescript@5.6.3)
@@ -358,8 +358,8 @@ packages:
       typescript: 5.6.3
     dev: false
 
-  /@0xobelisk/merak-sdk@0.0.6(typescript@5.6.3):
-    resolution: {integrity: sha512-2kZTDo/5ou1S5eqTl+zc+icGR7UPo5A65c14+X0bfYNB5bsF7LahJG8S4GqAAsGij0JKlQjbejPrFjypvs+owA==}
+  /@0xobelisk/merak-sdk@0.0.7(typescript@5.6.3):
+    resolution: {integrity: sha512-mJ8FiKWMSf3tfnhxS1miWlEgAMBGWt+X2B2kH7ZXYDdiccydPHSCdFbbETwZrZweprnGpaSunfqSfMJB+6cmow==}
     engines: {node: '>=18'}
     dependencies:
       '@0xobelisk/sui-client': 0.5.28(typescript@5.6.3)
